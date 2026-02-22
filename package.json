@@ -1,0 +1,33 @@
+{
+  "name": "dsa-learning-system",
+  "version": "1.0.0",
+  "description": "Personalized DSA Learning System via WhatsApp",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "debug": "ts-node -r tsconfig-paths/register src/debug.ts",
+    "dev": "ts-node -r tsconfig-paths/register src/index.ts",
+    "db:init": "ts-node -r tsconfig-paths/register src/db/init.ts",
+    "scheduler": "ts-node -r tsconfig-paths/register src/services/scheduler.ts"
+  },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "better-sqlite3": "^12.6.2",
+    "dotenv": "^16.4.1",
+    "express": "^4.18.2",
+    "node-cron": "^3.0.3",
+    "ollama": "^0.6.3",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.5",
+    "@types/node-cron": "^3.0.11",
+    "@types/uuid": "^9.0.7",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.3.3"
+  }
+}
