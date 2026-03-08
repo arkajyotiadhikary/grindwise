@@ -19,26 +19,64 @@ type RawMessage = {
   [key: string]: any;
 };
 
+const processedMessageIds = new Set<string>();
+const MAX_PROCESSED_IDS = 1000;
+
+function markProcessed(messageId: string): boolean {
+  if (processedMessageIds.has(messageId)) return false;
+  processedMessageIds.add(messageId);
+  if (processedMessageIds.size > MAX_PROCESSED_IDS) {
+    const first = processedMessageIds.values().next().value as string;
+    processedMessageIds.delete(first);
+  }
+  return true;
+}
+
 export function createMessageHandler(di: DIContainer): OnMessageCallback {
-  return async (_sock: WASocket, payload: BaileysMessage): Promise<void> => {
+  return async (sock: WASocket, payload: BaileysMessage): Promise<void> => {
     if (payload.type !== 'notify') return;
     const raw = payload.messages[0] as RawMessage | undefined;
-    await handleIncomingMessage(raw, di);
+    await handleIncomingMessage(raw, sock, di);
   };
+}
+
+function resolvePhone(
+  remoteJid: string,
+  msg: RawMessage,
+  sock: WASocket,
+): string {
+  if (remoteJid.endsWith('@lid')) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const senderPn: string | undefined = (msg as any)['senderPn'];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const participantPn: string | undefined = (msg as any)['participantPn'];
+    if (senderPn) return senderPn;
+    if (participantPn) return participantPn;
+
+    const botJid: string | undefined = sock.user?.id;
+    if (botJid) {
+      return botJid.replace(/:.*@/, '@');
+    }
+  }
+  return remoteJid;
 }
 
 async function handleIncomingMessage(
   msg: RawMessage | undefined,
+  sock: WASocket,
   di: DIContainer,
 ): Promise<void> {
-  if (!msg || !msg.message || msg.key?.fromMe) return;
+  if (!msg || !msg.message) return;
+
+  const messageId = msg.key?.id;
+  if (!messageId) return;
+  if (di.getMessenger().isBotMessage(messageId)) return;
+  if (!markProcessed(messageId)) return;
 
   const remoteJid = msg.key?.remoteJid;
   if (!remoteJid || typeof remoteJid !== 'string') return;
 
-  const phone = remoteJid.endsWith('@s.whatsapp.net')
-    ? remoteJid.replace('@s.whatsapp.net', '')
-    : remoteJid;
+  const phone = resolvePhone(remoteJid, msg, sock);
 
   try {
     const repo = di.getRepository();
@@ -58,7 +96,8 @@ async function handleIncomingMessage(
     }
 
     user = repo.getUserByPhone(phone) ?? user;
-    await routeUserCommand(user, msg, text?.toUpperCase().trim() ?? '', di);
+    const normalized = text?.toUpperCase().trim().replace(/^\//, '') ?? '';
+    await routeUserCommand(user, msg, normalized, di);
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error('[handlers] handleIncomingMessage error', {
@@ -132,7 +171,7 @@ async function routeUserCommand(
           .getMessenger()
           .sendText(
             user.phone_number,
-            `I didn't understand "*${command.slice(0, 50)}*".\n\nReply *HELP* for available commands.`,
+            `I didn't understand "*${command.slice(0, 50)}*".\n\nReply */help* for available commands.`,
           );
       }
   }

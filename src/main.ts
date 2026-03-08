@@ -25,15 +25,20 @@ async function main(): Promise<void> {
 
   const db = getDatabase();
 
+  let messenger: BaileysMessenger | undefined;
+  let di: DIContainer | undefined;
+
   await startBot(
     async (sock, messages) => {
-      const messenger = new BaileysMessenger(sock);
-      const di = new DIContainer(db, messenger);
+      if (!messenger || !di) {
+        messenger = new BaileysMessenger(sock);
+        di = new DIContainer(db, messenger);
+      }
       await createMessageHandler(di)(sock, messages);
     },
     (sock) => {
-      const messenger = new BaileysMessenger(sock);
-      const di = new DIContainer(db, messenger);
+      messenger = new BaileysMessenger(sock);
+      di = new DIContainer(db, messenger);
       startScheduler(di);
       startExpressServer(di);
     },

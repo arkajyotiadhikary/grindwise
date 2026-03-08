@@ -38,4 +38,8 @@ export class OpenClawMessenger implements IMessenger {
   async markRead(messageId: string): Promise<void> {
     return this.svc.markRead(messageId);
   }
+
+  isBotMessage(_messageId: string): boolean {
+    return false;
+  }
 }

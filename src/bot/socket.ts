@@ -60,10 +60,23 @@ async function connectWithBackoff(
       child: () => silentLogger,
     } as unknown;
 
+    const msgStore = new Map<string, unknown>();
+
     const socketOptions: Record<string, unknown> = {
       auth: state,
       printQRInTerminal: false,
       logger: silentLogger,
+      getMessage: async (key: { remoteJid?: string; id?: string }) => {
+        const msg = msgStore.get(key.id ?? '');
+        return (msg as Record<string, unknown> | undefined)?.message ?? { conversation: '' };
+      },
+      patchMessageBeforeSending: async (
+        msg: unknown,
+        _recipientJids: unknown[],
+      ) => {
+        await sock.uploadPreKeysToServerIfRequired();
+        return msg;
+      },
     };
     if (waVersion) {
       socketOptions.version = waVersion;
@@ -160,6 +173,11 @@ async function connectWithBackoff(
 
     sock.ev.on('messages.upsert', async (payload: BaileysMessage) => {
       try {
+        for (const m of payload.messages as Array<{ key?: { id?: string }; message?: unknown }>) {
+          if (m.key?.id && m.message) {
+            msgStore.set(m.key.id, m);
+          }
+        }
         await onMessage(sock, payload);
       } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : String(error);

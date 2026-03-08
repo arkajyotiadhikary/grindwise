@@ -35,9 +35,14 @@ function buildNumberedMenu(
 export class BaileysMessenger implements IMessenger {
   private readonly sock: WASocket;
   private lastSent = 0;
+  private readonly sentMessageIds = new Set<string>();
 
   constructor(sock: WASocket) {
     this.sock = sock;
+  }
+
+  isBotMessage(messageId: string): boolean {
+    return this.sentMessageIds.has(messageId);
   }
 
   async sendText(to: string, text: string): Promise<SendResult> {
@@ -45,8 +50,12 @@ export class BaileysMessenger implements IMessenger {
       await this.rateLimit();
       const jid = this.resolveJid(to);
       const safe = sanitizeText(text);
-      await this.sock.sendMessage(jid, { text: safe });
-      return { success: true };
+      const sent = await this.sock.sendMessage(jid, { text: safe });
+      const messageId = sent?.key?.id as string | undefined;
+      if (messageId) {
+        this.sentMessageIds.add(messageId);
+      }
+      return { success: true, messageId };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
       console.error('[BaileysMessenger] sendText failed', { error: msg, to });
@@ -78,7 +87,13 @@ export class BaileysMessenger implements IMessenger {
   async markRead(_messageId: string): Promise<void> {}
 
   private resolveJid(to: string): string {
-    if (to.endsWith('@s.whatsapp.net') || to.endsWith('@g.us')) return to;
+    if (
+      to.endsWith('@s.whatsapp.net') ||
+      to.endsWith('@g.us') ||
+      to.endsWith('@lid')
+    ) {
+      return to;
+    }
     return formatJid(to);
   }
 
