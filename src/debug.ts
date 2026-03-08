@@ -11,19 +11,21 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { Repository } from '@Vrind/db/repository';
-import { CurriculumEngine } from '@Vrind/core/curriculum-engine';
+import { SqliteRepositoryAdapter } from '@Vrind/adapters/persistence/sqlite/sqlite-repository.adapter';
+import { getDatabase } from '@Vrind/adapters/persistence/sqlite/database';
+import { CurriculumDomainService } from '@Vrind/domain/services/curriculum.domain-service';
 import { OllamaClient } from '@Vrind/infrastructure/ollama-client';
-import { ContentGeneratorService } from '@Vrind/services/content-generator';
-import { LearningService } from '@Vrind/services/learning';
-import { LeetCodeService } from '@Vrind/services/leetcode';
+import { OllamaContentGeneratorAdapter } from '@Vrind/adapters/content-generator/ollama-content-generator.adapter';
+import { LeetCodeProblemProviderAdapter } from '@Vrind/adapters/problem-provider/leetcode-problem-provider.adapter';
 import { NEETCODE_ROADMAP, NEETCODE_PROBLEMS } from '@Vrind/data/neetcode-roadmap';
+import { startBot } from '@Vrind/bot/socket';
+import { BaileysMessenger } from '@Vrind/channels/baileys-messenger';
 
 // ─── Shared fixtures ──────────────────────────────────────────────────────────
 
-const repo = new Repository();
+const repo = new SqliteRepositoryAdapter(getDatabase());
 const ollama = new OllamaClient();
-const contentGen = new ContentGeneratorService(ollama);
+const contentGen = new OllamaContentGeneratorAdapter(ollama);
 
 /** Grab any topic from the DB for testing (falls back to roadmap data). */
 function getTestTopic() {
@@ -33,7 +35,7 @@ function getTestTopic() {
     name: 'Arrays: Fundamentals',
     description: 'Understanding arrays, indexing, and basic operations',
     category: 'Arrays & Hashing',
-    difficulty: 'Beginner',
+    difficulty: 'Beginner' as const,
     day_number: 1,
     week_number: 1,
     order_index: 1,
@@ -41,6 +43,7 @@ function getTestTopic() {
     key_concepts: JSON.stringify(['O(1) access', 'index-based', 'contiguous memory']),
     time_complexity: 'O(n)',
     space_complexity: 'O(1)',
+    created_at: new Date().toISOString(),
   };
 }
 
@@ -50,10 +53,11 @@ function getTestProblem() {
   return repo.getProblemForTopic(topic.id) ?? {
     id: 'stub-two-sum',
     topic_id: 'arrays-basics',
+    leetcode_id: undefined,
     leetcode_slug: 'two-sum',
     title: 'Two Sum',
     description: 'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.',
-    difficulty: 'Easy',
+    difficulty: 'Easy' as const,
     solution_code: `function twoSum(nums: number[], target: number): number[] {
   const map = new Map<number, number>();
   for (let i = 0; i < nums.length; i++) {
@@ -67,22 +71,21 @@ function getTestProblem() {
     hints: JSON.stringify(['Think about what complement you need', 'Use a hash map for O(1) lookup']),
     tags: JSON.stringify(['array', 'hash-table']),
     url: 'https://leetcode.com/problems/two-sum/',
+    fetched_at: undefined,
   };
 }
 
 // ─── SECTION 1: Ollama connectivity ──────────────────────────────────────────
-// Check if Ollama server is reachable.
 
-async function debugOllamaHealth() {
+async function debugOllamaHealth(): Promise<void> {
   console.log('--- Ollama Health Check ---');
   const available = await ollama.isAvailable();
   console.log('Available:', available);
 }
 
 // ─── SECTION 2: Raw Ollama generate ──────────────────────────────────────────
-// Send a raw prompt and see what the LLM returns.
 
-async function debugOllamaGenerate() {
+async function debugOllamaGenerate(): Promise<void> {
   console.log('--- Raw Ollama Generate ---');
   const result = await ollama.generate('Say hello in one sentence.', {
     temperature: 0.5,
@@ -93,7 +96,7 @@ async function debugOllamaGenerate() {
 
 // ─── SECTION 3: ContentGenerator — Theory ────────────────────────────────────
 
-async function debugGenerateTheory() {
+async function debugGenerateTheory(): Promise<void> {
   console.log('--- ContentGenerator: generateTheory ---');
   const topic = getTestTopic();
   console.log('Topic:', topic.name);
@@ -113,7 +116,7 @@ async function debugGenerateTheory() {
 
 // ─── SECTION 4: ContentGenerator — Solution Walkthrough ──────────────────────
 
-async function debugGenerateSolutionWalkthrough() {
+async function debugGenerateSolutionWalkthrough(): Promise<void> {
   console.log('--- ContentGenerator: generateSolutionWalkthrough ---');
   const topic = getTestTopic();
   const problem = getTestProblem();
@@ -135,7 +138,7 @@ async function debugGenerateSolutionWalkthrough() {
 
 // ─── SECTION 5: ContentGenerator — Revision Summary ──────────────────────────
 
-async function debugGenerateRevisionSummary() {
+async function debugGenerateRevisionSummary(): Promise<void> {
   console.log('--- ContentGenerator: generateRevisionSummary ---');
   const topic = getTestTopic();
   const reviewCount = 2;
@@ -155,7 +158,7 @@ async function debugGenerateRevisionSummary() {
 
 // ─── SECTION 6: Repository queries ───────────────────────────────────────────
 
-function debugRepository() {
+function debugRepository(): void {
   console.log('--- Repository ---');
   const topic = repo.getTopicById('arrays-basics');
   console.log('Topic by ID:', topic?.name ?? '(not seeded)');
@@ -168,26 +171,28 @@ function debugRepository() {
   users.forEach(u => console.log(' -', u.phone_number, `W${u.current_week}D${u.current_day}`));
 }
 
-// ─── SECTION 7: CurriculumEngine ─────────────────────────────────────────────
+// ─── SECTION 7: CurriculumDomainService ──────────────────────────────────────
 
-function debugCurriculumEngine() {
-  console.log('--- CurriculumEngine ---');
-  const engine = new CurriculumEngine(repo);
+function debugCurriculumEngine(): void {
+  console.log('--- CurriculumDomainService ---');
+  const curriculum = new CurriculumDomainService(repo);
 
   const users = repo.getAllActiveUsers();
   if (!users.length) { console.log('No active users in DB.'); return; }
 
   const user = users[0];
-  const topic = engine.getCurrentTopic(user);
+  if (!user) return;
+
+  const topic = curriculum.getCurrentTopic(user);
   console.log(`User ${user.phone_number} → current topic: ${topic?.name ?? '(complete)'}`);
 
-  const progress = engine.getProgress(user);
+  const progress = curriculum.getProgress(user);
   console.log('Progress:', progress);
 }
 
 // ─── SECTION 8: Static roadmap data ──────────────────────────────────────────
 
-function debugRoadmapData() {
+function debugRoadmapData(): void {
   console.log('--- NEETCODE_ROADMAP ---');
   console.log('Total topics defined:', NEETCODE_ROADMAP.length);
   NEETCODE_ROADMAP.forEach(t =>
@@ -200,11 +205,73 @@ function debugRoadmapData() {
   });
 }
 
+// ─── SECTION 9: Messenger — manual send ──────────────────────────────────────
+
+const DEBUG_TO = process.env.DEBUG_MESSENGER_TO ?? '';
+const DEBUG_MESSAGE = process.env.DEBUG_MESSENGER_MSG ?? '👋 Debug test from DSA Mentor bot';
+
+async function debugMessengerSend(): Promise<void> {
+  if (!DEBUG_TO) {
+    console.error('[debugMessenger] Set DEBUG_MESSENGER_TO=<phone_number> in .env and retry.');
+    return;
+  }
+
+  console.log(`--- Messenger debug: sending to ${DEBUG_TO} ---`);
+
+  await startBot(
+    async () => { /* ignore incoming messages */ },
+    async sock => {
+      const messenger = new BaileysMessenger(sock);
+
+      console.log('Sending text message...');
+      const textResult = await messenger.sendText(DEBUG_TO, DEBUG_MESSAGE);
+      console.log('sendText result:', textResult);
+
+      console.log('Sending buttons (falls back to numbered text)...');
+      const buttonsResult = await messenger.sendButtons(
+        DEBUG_TO,
+        'Which topic do you want to review?',
+        [
+          { id: 'arrays', title: 'Arrays' },
+          { id: 'trees', title: 'Trees' },
+          { id: 'graphs', title: 'Graphs' },
+        ],
+        'DSA Revision',
+      );
+      console.log('sendButtons result:', buttonsResult);
+
+      console.log('Sending list (falls back to lettered text)...');
+      const listResult = await messenger.sendList(
+        DEBUG_TO,
+        'Pick a difficulty level:',
+        'Select',
+        [
+          { id: 'easy', title: 'Easy', description: 'Warm-up problems' },
+          { id: 'medium', title: 'Medium', description: 'Core interview problems' },
+          { id: 'hard', title: 'Hard', description: 'Advanced challenges' },
+        ],
+      );
+      console.log('sendList result:', listResult);
+
+      console.log('✅ All debug sends complete. Waiting 3s for socket to flush...');
+      await new Promise<void>(resolve => setTimeout(resolve, 3000));
+      process.exit(0);
+    },
+  );
+}
+
+// ─── SECTION 10: LeetCode service ────────────────────────────────────────────
+
+async function debugLeetCode(): Promise<void> {
+  console.log('--- LeetCodeProblemProviderAdapter ---');
+  const lc = new LeetCodeProblemProviderAdapter(repo);
+  const problem = await lc.fetchProblemBySlug('two-sum');
+  console.log('Fetched:', problem?.title ?? '(null)');
+}
+
 // ─── Runner ───────────────────────────────────────────────────────────────────
-// Uncomment exactly ONE function call below to run that debug section.
 
-
-async function main() {
+async function main(): Promise<void> {
   try {
     // await debugOllamaHealth();
     // await debugOllamaGenerate();
@@ -214,10 +281,8 @@ async function main() {
     // debugRepository();
     // debugCurriculumEngine();
     // debugRoadmapData();
-
-    const responst = await ollama.generate('What is 2+2?');
-    console.log('Ollama response:', responst);
-    console.log('ℹ️  All sections are commented out. Uncomment one in main() and re-run.');
+    // await debugLeetCode();
+    await debugMessengerSend();
   } finally {
     repo.close();
   }

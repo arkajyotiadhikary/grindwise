@@ -1,49 +1,15 @@
-import { OllamaClient, OllamaGenerateOptions } from '../infrastructure/ollama-client';
-import { Topic, Problem } from '../db/repository';
-
-// ─── Output Types ─────────────────────────────────────────────────────────────
-
-export interface TheoryContent {
-  /** 1-2 sentence core explanation of what the topic is and why it matters. */
-  coreConcept: string;
-  /** 3-5 bullet-point takeaways to remember. */
-  keyTakeaways: string[];
-  /** Optional minimal TypeScript code snippet. */
-  codeExample?: string;
-  /** Optional real-world analogy in one sentence. */
-  analogy?: string;
-}
-
-export interface SolutionWalkthrough {
-  /** High-level algorithm choice in one sentence. */
-  approach: string;
-  /** Ordered steps explaining the solution. */
-  steps: string[];
-  /** The "aha moment" — why this approach works. */
-  keyInsight: string;
-  /** e.g. O(n) */
-  timeComplexity: string;
-  /** e.g. O(1) */
-  spaceComplexity: string;
-}
-
-export interface RevisionSummary {
-  /** 1-2 sentence memory trigger recap. */
-  recap: string;
-  /** Must-remember facts for recall. */
-  keyPoints: string[];
-  /** Common pitfalls to watch out for. */
-  commonMistakes: string[];
-  /** How this topic connects to related DSA concepts. */
-  connectsTo: string;
-}
+import { OllamaClient, OllamaGenerateOptions } from '../../infrastructure/ollama-client';
+import {
+  IContentGeneratorPort,
+  TheoryContent,
+  SolutionWalkthrough,
+  RevisionSummary,
+} from '../../domain/ports/content-generator.port';
+import { Topic } from '../../domain/entities/topic.entity';
+import { Problem } from '../../domain/entities/problem.entity';
 
 // ─── Section Parsers ──────────────────────────────────────────────────────────
 
-/**
- * Extract a single-value section from a structured LLM response.
- * e.g. "CORE_CONCEPT:\n<content>\n\nNEXT_SECTION:" → "<content>"
- */
 function extractSection(text: string, header: string): string {
   const pattern = new RegExp(
     `${header}:\\s*([\\s\\S]*?)(?=\\n[A-Z][A-Z_]+:|$)`,
@@ -53,9 +19,6 @@ function extractSection(text: string, header: string): string {
   return match ? match[1].trim() : '';
 }
 
-/**
- * Extract a bullet-list section and return each item as a clean string.
- */
 function extractBullets(text: string, header: string): string[] {
   const block = extractSection(text, header);
   return block
@@ -64,9 +27,6 @@ function extractBullets(text: string, header: string): string[] {
     .filter(line => line.length > 0);
 }
 
-/**
- * Extract a numbered list section and return each item as a clean string.
- */
 function extractNumberedList(text: string, header: string): string[] {
   const block = extractSection(text, header);
   return block
@@ -75,9 +35,6 @@ function extractNumberedList(text: string, header: string): string[] {
     .filter(line => line.length > 0);
 }
 
-/**
- * Strip markdown code fences from a code block string.
- */
 function stripCodeFences(raw: string): string {
   return raw
     .replace(/^```[\w]*\n?/, '')
@@ -85,33 +42,17 @@ function stripCodeFences(raw: string): string {
     .trim();
 }
 
-// ─── ContentGeneratorService ──────────────────────────────────────────────────
+// ─── OllamaContentGeneratorAdapter ───────────────────────────────────────────
 
-/**
- * Generates AI-powered DSA learning content via Ollama.
- *
- * Responsibilities:
- *  - Theory: bite-sized concept explanations
- *  - Solution walkthrough: step-by-step problem reasoning
- *  - Revision summary: spaced-repetition memory triggers
- *
- * All methods return null on Ollama failure so callers can fall back
- * to static content without crashing the learning flow.
- */
-export class ContentGeneratorService {
+export class OllamaContentGeneratorAdapter implements IContentGeneratorPort {
   private readonly ollama: OllamaClient;
 
-  constructor(ollama?: OllamaClient) {
-    this.ollama = ollama ?? new OllamaClient();
+  constructor(ollama: OllamaClient) {
+    this.ollama = ollama;
   }
 
   // ── Theory Generation ───────────────────────────────────────────────────────
 
-  /**
-   * Generate a bite-sized theory explanation for a roadmap topic.
-   * AI receives: topic name, category, difficulty, key concepts.
-   * AI does NOT decide what to teach — only how to explain the given topic.
-   */
   async generateTheory(topic: Topic): Promise<TheoryContent | null> {
     const keyConcepts = this.parseJson<string[]>(topic.key_concepts, []);
 
@@ -151,7 +92,6 @@ Rules:
   }
 
   private parseTheory(raw: string): TheoryContent {
-    // CODE_EXAMPLE needs special handling to strip code fences
     const codeMatch = /CODE_EXAMPLE:\s*([\s\S]*?)(?=\nANALOGY:|$)/i.exec(raw);
     const codeBlock = codeMatch ? stripCodeFences(codeMatch[1].trim()) : undefined;
 
@@ -165,11 +105,6 @@ Rules:
 
   // ── Solution Walkthrough ────────────────────────────────────────────────────
 
-  /**
-   * Generate a step-by-step solution walkthrough for a LeetCode problem.
-   * AI receives: problem title, difficulty, topic, brief description.
-   * AI does NOT choose which problem to explain — only how to explain it.
-   */
   async generateSolutionWalkthrough(
     problem: Problem,
     topic: Topic,
@@ -223,11 +158,6 @@ Rules:
 
   // ── Revision Summary ────────────────────────────────────────────────────────
 
-  /**
-   * Generate a spaced-repetition revision card for a topic.
-   * reviewCount is passed so the AI can calibrate recall vs. re-teach tone.
-   * Higher reviewCount → shorter, more recall-focused output.
-   */
   async generateRevisionSummary(
     topic: Topic,
     reviewCount: number,
@@ -279,9 +209,6 @@ Rules:
 
   // ── Message Formatters ──────────────────────────────────────────────────────
 
-  /**
-   * Format an AI-generated theory as a WhatsApp-ready message string.
-   */
   formatTheoryMessage(
     topic: Topic,
     content: TheoryContent,
@@ -322,10 +249,6 @@ Rules:
     return parts.join('\n');
   }
 
-  /**
-   * Format an AI-generated solution walkthrough as a WhatsApp-ready message string.
-   * Appends stored solution code if available.
-   */
   formatSolutionMessage(problem: Problem, walkthrough: SolutionWalkthrough): string {
     const parts: string[] = [
       `✅ *Solution: ${problem.title}*`,
@@ -353,9 +276,6 @@ Rules:
     return parts.join('\n');
   }
 
-  /**
-   * Format an AI-generated revision summary as a WhatsApp-ready message string.
-   */
   formatRevisionMessage(topic: Topic, summary: RevisionSummary, daysAgo: number): string {
     const parts: string[] = [
       `🔄 *Review: ${topic.name}*`,
@@ -387,10 +307,6 @@ Rules:
 
   // ── Private Helpers ─────────────────────────────────────────────────────────
 
-  /**
-   * Wraps an Ollama generate call with error handling.
-   * Returns null on any failure so the caller can fall back to static content.
-   */
   private async safeGenerate<T>(
     prompt: string,
     parser: (raw: string) => T,
@@ -401,7 +317,7 @@ Rules:
       const raw = await this.ollama.generate(prompt, options);
       return parser(raw);
     } catch (err) {
-      console.warn(`[ContentGenerator] ${context} failed:`, (err as Error).message);
+      console.warn(`[OllamaContentGeneratorAdapter] ${context} failed:`, (err as Error).message);
       return null;
     }
   }

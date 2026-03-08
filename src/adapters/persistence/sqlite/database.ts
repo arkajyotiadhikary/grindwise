@@ -5,9 +5,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const DB_PATH = process.env.DB_PATH || './data/dsa_learning.db';
+const DB_PATH = process.env.DB_PATH ?? './data/dsa_learning.db';
 
-// Ensure data directory exists
 const dbDir = path.dirname(DB_PATH);
 if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
@@ -46,8 +45,8 @@ export function initializeDatabase(): void {
       day_number INTEGER NOT NULL,
       week_number INTEGER NOT NULL,
       order_index INTEGER NOT NULL,
-      content TEXT,          -- Full explanation markdown
-      key_concepts TEXT,     -- JSON array of key points
+      content TEXT,
+      key_concepts TEXT,
       time_complexity TEXT,
       space_complexity TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -64,8 +63,8 @@ export function initializeDatabase(): void {
       difficulty TEXT CHECK(difficulty IN ('Easy','Medium','Hard')),
       solution_code TEXT,
       solution_explanation TEXT,
-      hints TEXT,            -- JSON array
-      tags TEXT,             -- JSON array
+      hints TEXT,
+      tags TEXT,
       url TEXT,
       fetched_at DATETIME,
       FOREIGN KEY (topic_id) REFERENCES topics(id)
@@ -97,7 +96,7 @@ export function initializeDatabase(): void {
       interval_days INTEGER DEFAULT 1,
       ease_factor REAL DEFAULT 2.5,
       repetition_count INTEGER DEFAULT 0,
-      last_quality INTEGER,   -- 0-5 rating from SM-2 algorithm
+      last_quality INTEGER,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id),
@@ -109,8 +108,8 @@ export function initializeDatabase(): void {
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id),
       week_number INTEGER NOT NULL,
-      questions TEXT NOT NULL,  -- JSON array of question objects
-      answers TEXT,             -- JSON object of user answers
+      questions TEXT NOT NULL,
+      answers TEXT,
       score INTEGER,
       max_score INTEGER,
       percentage REAL,
@@ -126,7 +125,7 @@ export function initializeDatabase(): void {
       topic_id TEXT NOT NULL REFERENCES topics(id),
       question TEXT NOT NULL,
       type TEXT CHECK(type IN ('mcq','coding','true_false','fill_blank')) DEFAULT 'mcq',
-      options TEXT,           -- JSON array for MCQ
+      options TEXT,
       correct_answer TEXT NOT NULL,
       explanation TEXT,
       difficulty TEXT CHECK(difficulty IN ('Easy','Medium','Hard')),
@@ -138,7 +137,7 @@ export function initializeDatabase(): void {
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id),
       direction TEXT CHECK(direction IN ('inbound','outbound')) NOT NULL,
-      message_type TEXT NOT NULL,  -- 'daily_topic','problem','test','reminder','response'
+      message_type TEXT NOT NULL,
       content TEXT,
       status TEXT CHECK(status IN ('pending','sent','delivered','read','failed')) DEFAULT 'pending',
       openclaw_message_id TEXT,
@@ -150,11 +149,11 @@ export function initializeDatabase(): void {
     CREATE TABLE IF NOT EXISTS scheduled_jobs (
       id TEXT PRIMARY KEY,
       user_id TEXT REFERENCES users(id),
-      job_type TEXT NOT NULL,  -- 'daily_topic','weekly_test','spaced_repeat'
+      job_type TEXT NOT NULL,
       scheduled_for DATETIME NOT NULL,
       executed_at DATETIME,
       status TEXT CHECK(status IN ('pending','executed','failed','skipped')) DEFAULT 'pending',
-      payload TEXT,           -- JSON metadata
+      payload TEXT,
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
@@ -172,7 +171,6 @@ export function initializeDatabase(): void {
   db.close();
 }
 
-// Run directly
 if (require.main === module) {
   initializeDatabase();
 }

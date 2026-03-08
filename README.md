@@ -1,110 +1,132 @@
 # 📚 DSA Learning System — WhatsApp Bot
 
-A personalized Data Structures & Algorithms learning system delivered via **WhatsApp** using **OpenClaw**, with **SQLite** for persistence and **TypeScript** as the backend.
+A personalized Data Structures & Algorithms learning system delivered via **WhatsApp** using **Baileys** (direct socket connection, no third-party API), with **SQLite** for persistence and **TypeScript** as the backend.
 
 ---
 
 ## 🏗️ Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                       DSA Learning System                        │
-├─────────────────┬───────────────────────────────────────────────┤
-│   Scheduler     │  Cron jobs for daily topics, weekly tests,     │
-│  (node-cron)    │  and spaced repetition reminders               │
-├─────────────────┼───────────────────────────────────────────────┤
-│  Webhook Server │  Express.js server receiving WhatsApp messages  │
-│   (Express)     │  from OpenClaw and routing user commands        │
-├─────────────────┼───────────────────────────────────────────────┤
-│ Learning Service│  Core business logic: topic delivery, progress  │
-│                 │  tracking, test generation, review scheduling   │
-├─────────────────┼───────────────────────────────────────────────┤
-│ OpenClaw Client │  WhatsApp message delivery (text, buttons,      │
-│                 │  interactive lists for MCQ tests)               │
-├─────────────────┼───────────────────────────────────────────────┤
-│ LeetCode API    │  Fetches real problems aligned with each topic  │
-│   (GraphQL)     │                                                 │
-├─────────────────┼───────────────────────────────────────────────┤
-│  SQLite (DB)    │  Users, progress, spaced repetition schedule,   │
-│                 │  problems, tests, message logs                  │
-└─────────────────┴───────────────────────────────────────────────┘
+WhatsApp ──► Baileys socket ──► socket.ts (Transport)
+                                    │ messages.upsert
+                               handlers.ts (Command Router)
+                                    │ routeUserCommand()
+                             LearningService (Orchestration)
+                                    │ IMessenger interface
+                            BaileysMessenger (Delivery)
+                                    │ sock.sendMessage()
+                               WhatsApp (delivered)
+
+Scheduled:
+  node-cron ──► scheduler.ts ──► LearningService ──► same path
 ```
+
+### Layers (top → bottom, dependencies flow downward only)
+
+| Layer | Files | Responsibility |
+|-------|-------|----------------|
+| **Transport** | `bot/socket.ts` | Baileys socket lifecycle, QR, reconnect |
+| **Handlers** | `bot/handlers.ts` | Message validation, command routing |
+| **Services** | `services/learning.ts`, `services/scheduler.ts` | Domain orchestration |
+| **Channels** | `channels/baileys-messenger.ts`, `channels/openclaw-messenger.ts` | `IMessenger` implementations |
+| **Infrastructure** | `db/`, `infrastructure/` | SQLite, Ollama client |
+
+The `IMessenger` interface (`domain/ports/messaging.port.ts`) decouples all business logic from the delivery channel — swapping WhatsApp for Discord or Telegram only requires a new adapter.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-dsa-learning-system/
-├── src/
-│   ├── index.ts                  # App entry point & bootstrap
-│   ├── data/
-│   │   └── neetcode-roadmap.ts   # Full NeetCode DSA topic definitions
-│   ├── db/
-│   │   ├── init.ts               # Database schema creation
-│   │   ├── seeder.ts             # Seed roadmap & test questions
-│   │   └── repository.ts         # All database operations (CRUD)
-│   └── services/
-│       ├── openclaw.ts           # OpenClaw API + message formatting
-│       ├── leetcode.ts           # LeetCode GraphQL API integration
-│       ├── learning.ts           # Core learning orchestration
-│       ├── scheduler.ts          # Cron jobs for automated delivery
-│       └── webhook.ts            # Incoming message handler & command router
-├── package.json
-├── tsconfig.json
-└── .env.example
+src/
+├── main.ts                          # Entry point (Baileys bot)
+├── index.ts                         # Express server (admin endpoints)
+├── config/
+│   └── index.ts                     # Centralized env var reads
+├── bot/
+│   ├── socket.ts                    # Transport: Baileys socket lifecycle
+│   └── handlers.ts                  # Incoming message routing
+├── channels/
+│   ├── messenger.interface.ts       # Re-exports IMessenger (from domain/ports)
+│   ├── baileys-messenger.ts         # IMessenger via Baileys (primary)
+│   └── openclaw-messenger.ts        # IMessenger via OpenClaw HTTP API (fallback)
+├── domain/
+│   ├── ports/
+│   │   └── messaging.port.ts        # IMessenger, SendResult, ButtonOption, ListOption
+│   └── ...
+├── services/
+│   ├── learning.ts                  # Core orchestration (injected IMessenger)
+│   ├── scheduler.ts                 # Cron jobs (injected IMessenger)
+│   ├── openclaw.ts                  # OpenClaw HTTP client + MessageFormatter
+│   └── content-generator.ts        # Ollama-powered theory/solution generation
+├── shared/
+│   └── message-formatter.ts         # Typed MessageFormatter (domain entities)
+├── core/
+│   └── curriculum-engine/           # Topic sequencing, progress, roadmap tracking
+├── db/
+│   ├── init.ts                      # Schema creation
+│   ├── seeder.ts                    # Seed roadmap & test questions
+│   └── repository.ts                # All DB operations (CRUD)
+├── data/
+│   └── neetcode-roadmap.ts          # Full NeetCode topic + problem definitions
+└── infrastructure/
+    └── ollama-client.ts             # Local LLM client
 ```
-
----
-
-## 🗄️ Database Schema
-
-### Core Tables
-
-| Table | Purpose |
-|-------|---------|
-| `users` | Phone, name, current day/week, streak |
-| `topics` | Full NeetCode roadmap with content & code |
-| `problems` | LeetCode problems linked to each topic |
-| `user_progress` | Per-user topic status & rating |
-| `spaced_repetition` | SM-2 algorithm state per user/topic |
-| `weekly_tests` | Test instances with questions & scores |
-| `test_questions` | Question bank per topic |
-| `message_logs` | Full audit trail of all messages |
-| `scheduled_jobs` | Job queue for future messages |
 
 ---
 
 ## ⚙️ Setup
 
 ### 1. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 2. Configure Environment
+
 ```bash
 cp .env.example .env
-# Edit .env with your credentials:
-# - OPENCLAW_API_KEY
-# - OPENCLAW_PHONE_NUMBER_ID
-# - OPENCLAW_VERIFY_TOKEN
 ```
 
-### 3. Start the System
+Key variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AUTH_STATE_PATH` | `auth_state` | Baileys session storage directory |
+| `PORT` | `3000` | Express admin server port |
+| `DAILY_MESSAGE_TIME` | `09:00` | When to deliver daily topics (HH:MM) |
+| `WEEKLY_TEST_DAY` | `6` | Day of week for tests (0=Sun, 6=Sat) |
+| `WEEKLY_TEST_TIME` | `10:00` | Time for weekly test delivery |
+
+### 3. Start the Bot
+
 ```bash
 # Development
 npm run dev
 
 # Production
-npm run build && npm start
+npm run build && node dist/main.js
 ```
 
-### 4. Register Your OpenClaw Webhook
-Point your OpenClaw dashboard webhook to:
-```
-https://your-server.com/api/webhook
-```
+On first run, a QR code is printed to the terminal. Scan it with WhatsApp. The session is saved to `auth_state/` and reused on restart.
+
+---
+
+## 🔌 Delivery Channels
+
+### Baileys (primary — `src/channels/baileys-messenger.ts`)
+
+Direct WebSocket connection to WhatsApp. No API keys required.
+
+- Rate limited to 1 message/sec per recipient
+- `sendButtons` / `sendList` fall back to numbered text menus (Baileys limitation on regular accounts)
+- Session persisted via `useMultiFileAuthState` in `auth_state/`
+- Exponential backoff reconnect: 3s → 6s → ... → 60s max, 10 retries
+
+### OpenClaw (fallback — `src/channels/openclaw-messenger.ts`)
+
+HTTP API wrapper, used when the bot runs in webhook mode (e.g., for cloud deployments without persistent sockets). Requires `OPENCLAW_API_KEY` and `OPENCLAW_PHONE_NUMBER_ID`.
 
 ---
 
@@ -141,8 +163,6 @@ https://your-server.com/api/webhook
 
 ## 🔄 Spaced Repetition (SM-2 Algorithm)
 
-The system implements the **SuperMemo SM-2** algorithm:
-
 ```
 After each review, user rates recall quality (0-5):
   RECALL = 5 (Perfect recall)
@@ -173,32 +193,30 @@ ease_factor   = max(1.3, EF + 0.1 - (5-q)(0.08 + (5-q)×0.02))
 
 ---
 
-## 📡 API Endpoints
+## 📡 Admin API Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/health` | Health check |
-| `GET` | `/api/webhook` | OpenClaw webhook verification |
-| `POST` | `/api/webhook` | Incoming WhatsApp messages |
 | `POST` | `/admin/register` | Register a user manually |
-| `POST` | `/admin/send-daily` | Trigger daily delivery manually |
+| `POST` | `/admin/send-daily` | Trigger daily topic delivery to all users |
 
 ---
 
 ## 🔑 Key Design Decisions
 
-1. **Respond 200 immediately** to webhook before processing — prevents OpenClaw timeouts
-2. **SM-2 spaced repetition** schedules intervals of 1 → 6 → growing based on ease factor
-3. **Interactive WhatsApp messages** (lists/buttons) used for tests to enable one-tap answers
-4. **LeetCode GraphQL API** fetches real problems dynamically per topic
-5. **Transaction-safe DB writes** via better-sqlite3 synchronous API
-6. **Modular architecture**: OpenClaw, LeetCode, Learning, and Scheduler are independent services
+1. **`IMessenger` interface** decouples all business logic from delivery — swap Baileys for any channel by implementing one interface
+2. **Dependency injection** — `LearningService` and `scheduler` receive a messenger instance; no singletons or hidden coupling
+3. **Transport isolation** — `socket.ts` contains zero business logic; communicates upward via `onMessage`/`onReady` callbacks only
+4. **SM-2 spaced repetition** schedules review intervals of 1 → 6 → growing based on ease factor
+5. **Deterministic curriculum** — `CurriculumEngine` drives all topic ordering; AI is only used for content formatting
+6. **Transaction-safe DB writes** via better-sqlite3 synchronous API
 
 ---
 
 ## 🚀 Extending the System
 
-- **Add more topics**: Extend `NEETCODE_ROADMAP` in `src/data/neetcode-roadmap.ts`
-- **Add problems**: Add entries to `NEETCODE_PROBLEMS` or let `LeetCodeService.fetchProblemsForCategory()` auto-populate
-- **Add languages**: Translate `MessageFormatter` in `src/services/openclaw.ts`
-- **Support multiple roadmaps**: Add `roadmap_id` entries; the system is already multi-roadmap capable
+- **Add a new channel** (Discord, Telegram): implement `IMessenger` in `src/channels/`, pass it to `startScheduler()` and `startExpressServer()`
+- **Add more topics**: extend `NEETCODE_ROADMAP` in `src/data/neetcode-roadmap.ts`
+- **Add problems**: add entries to `NEETCODE_PROBLEMS` or use `LeetCodeService.fetchProblemsForCategory()`
+- **Support multiple roadmaps**: add `roadmap_id` to topics; the DB schema is already multi-roadmap capable

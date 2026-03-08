@@ -33,3 +33,6 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+
+# WhatsApp Baileys auth state (contains session credentials)
+auth_state/
