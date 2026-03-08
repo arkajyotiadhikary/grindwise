@@ -1,6 +1,6 @@
-import { User } from '../../domain/entities/user.entity';
-import { IRepositoryPort } from '../../domain/ports/repository.port';
-import { IMessenger } from '../../domain/ports/messaging.port';
+import { User } from '@grindwise/domain/entities/user.entity';
+import { IRepositoryPort } from '@grindwise/domain/ports/repository.port';
+import { IMessenger } from '@grindwise/domain/ports/messaging.port';
 
 export class HandleReviewRatingUseCase {
   constructor(

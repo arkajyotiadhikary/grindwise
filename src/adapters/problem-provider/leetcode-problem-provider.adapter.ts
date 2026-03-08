@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { IRepositoryPort } from '../../domain/ports/repository.port';
-import { IProblemProviderPort, LeetCodeProblem } from '../../domain/ports/problem-provider.port';
+import { IRepositoryPort } from '@grindwise/domain/ports/repository.port';
+import { IProblemProviderPort, LeetCodeProblem } from '@grindwise/domain/ports/problem-provider.port';
 
 const BASE_URL =
   process.env['ALFA_LEETCODE_API_URL'] ?? 'https://alfa-leetcode-api.onrender.com';

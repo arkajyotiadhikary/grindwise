@@ -1,7 +1,7 @@
-import { User } from '../../domain/entities/user.entity';
-import { IRepositoryPort } from '../../domain/ports/repository.port';
-import { IMessenger } from '../../domain/ports/messaging.port';
-import { CurriculumDomainService } from '../../domain/services/curriculum.domain-service';
+import { User } from '@grindwise/domain/entities/user.entity';
+import { IRepositoryPort } from '@grindwise/domain/ports/repository.port';
+import { IMessenger } from '@grindwise/domain/ports/messaging.port';
+import { CurriculumDomainService } from '@grindwise/domain/services/curriculum.domain-service';
 
 export class HandleDifficultyRatingUseCase {
   constructor(

@@ -1,11 +1,11 @@
 import Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
-import { IRepositoryPort } from '../../../domain/ports/repository.port';
-import { User } from '../../../domain/entities/user.entity';
-import { Topic } from '../../../domain/entities/topic.entity';
-import { Problem } from '../../../domain/entities/problem.entity';
-import { UserProgress, SpacedRepetition, TestQuestion, WeeklyTest } from '../../../domain/entities/progress.entity';
-import { SpacedRepetitionVO } from '../../../domain/value-objects/spaced-repetition.vo';
+import { IRepositoryPort } from '@grindwise/domain/ports/repository.port';
+import { User } from '@grindwise/domain/entities/user.entity';
+import { Topic } from '@grindwise/domain/entities/topic.entity';
+import { Problem } from '@grindwise/domain/entities/problem.entity';
+import { UserProgress, SpacedRepetition, TestQuestion, WeeklyTest } from '@grindwise/domain/entities/progress.entity';
+import { SpacedRepetitionVO } from '@grindwise/domain/value-objects/spaced-repetition.vo';
 
 export class SqliteRepositoryAdapter implements IRepositoryPort {
   constructor(private readonly db: Database.Database) {}

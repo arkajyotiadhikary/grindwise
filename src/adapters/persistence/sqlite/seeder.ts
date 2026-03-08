@@ -1,5 +1,5 @@
 import { getDatabase } from './database';
-import { NEETCODE_ROADMAP, NEETCODE_PROBLEMS } from '../../../data/neetcode-roadmap';
+import { NEETCODE_ROADMAP, NEETCODE_PROBLEMS } from '@grindwise/data/neetcode-roadmap';
 import { v4 as uuidv4 } from 'uuid';
 
 export function seedRoadmap(): void {

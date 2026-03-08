@@ -11,15 +11,15 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { SqliteRepositoryAdapter } from '@Vrind/adapters/persistence/sqlite/sqlite-repository.adapter';
-import { getDatabase } from '@Vrind/adapters/persistence/sqlite/database';
-import { CurriculumDomainService } from '@Vrind/domain/services/curriculum.domain-service';
-import { OllamaClient } from '@Vrind/infrastructure/ollama-client';
-import { OllamaContentGeneratorAdapter } from '@Vrind/adapters/content-generator/ollama-content-generator.adapter';
-import { LeetCodeProblemProviderAdapter } from '@Vrind/adapters/problem-provider/leetcode-problem-provider.adapter';
-import { NEETCODE_ROADMAP, NEETCODE_PROBLEMS } from '@Vrind/data/neetcode-roadmap';
-import { startBot } from '@Vrind/bot/socket';
-import { BaileysMessenger } from '@Vrind/channels/baileys-messenger';
+import { SqliteRepositoryAdapter } from '@grindwise/adapters/persistence/sqlite/sqlite-repository.adapter';
+import { getDatabase } from '@grindwise/adapters/persistence/sqlite/database';
+import { CurriculumDomainService } from '@grindwise/domain/services/curriculum.domain-service';
+import { OllamaClient } from '@grindwise/infrastructure/ollama-client';
+import { OllamaContentGeneratorAdapter } from '@grindwise/adapters/content-generator/ollama-content-generator.adapter';
+import { LeetCodeProblemProviderAdapter } from '@grindwise/adapters/problem-provider/leetcode-problem-provider.adapter';
+import { NEETCODE_ROADMAP, NEETCODE_PROBLEMS } from '@grindwise/data/neetcode-roadmap';
+import { startBot } from '@grindwise/bot/socket';
+import { BaileysMessenger } from '@grindwise/channels/baileys-messenger';
 
 // ─── Shared fixtures ──────────────────────────────────────────────────────────
 

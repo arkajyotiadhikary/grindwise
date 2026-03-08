@@ -9,9 +9,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "baseUrl": "./src",
+    "baseUrl": "./",
     "paths": {
-      "@Vrind/*": ["./*"]
+      "@grindwise/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"],

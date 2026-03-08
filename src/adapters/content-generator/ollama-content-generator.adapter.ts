@@ -1,12 +1,12 @@
-import { OllamaClient, OllamaGenerateOptions } from '../../infrastructure/ollama-client';
+import { OllamaClient, OllamaGenerateOptions } from '@grindwise/infrastructure/ollama-client';
 import {
   IContentGeneratorPort,
   TheoryContent,
   SolutionWalkthrough,
   RevisionSummary,
-} from '../../domain/ports/content-generator.port';
-import { Topic } from '../../domain/entities/topic.entity';
-import { Problem } from '../../domain/entities/problem.entity';
+} from '@grindwise/domain/ports/content-generator.port';
+import { Topic } from '@grindwise/domain/entities/topic.entity';
+import { Problem } from '@grindwise/domain/entities/problem.entity';
 
 // ─── Section Parsers ──────────────────────────────────────────────────────────
 

@@ -1,8 +1,8 @@
-import { User } from '../../domain/entities/user.entity';
-import { TestQuestion } from '../../domain/entities/progress.entity';
-import { IRepositoryPort } from '../../domain/ports/repository.port';
-import { IMessenger } from '../../domain/ports/messaging.port';
-import { MessageFormatter } from '../../shared/message-formatter';
+import { User } from '@grindwise/domain/entities/user.entity';
+import { TestQuestion } from '@grindwise/domain/entities/progress.entity';
+import { IRepositoryPort } from '@grindwise/domain/ports/repository.port';
+import { IMessenger } from '@grindwise/domain/ports/messaging.port';
+import { MessageFormatter } from '@grindwise/shared/message-formatter';
 
 export class SubmitTestAnswerUseCase {
   constructor(

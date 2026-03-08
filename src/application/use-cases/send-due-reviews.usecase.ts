@@ -1,8 +1,8 @@
-import { User } from '../../domain/entities/user.entity';
-import { IRepositoryPort } from '../../domain/ports/repository.port';
-import { IMessenger } from '../../domain/ports/messaging.port';
-import { IContentGeneratorPort } from '../../domain/ports/content-generator.port';
-import { MessageFormatter } from '../../shared/message-formatter';
+import { User } from '@grindwise/domain/entities/user.entity';
+import { IRepositoryPort } from '@grindwise/domain/ports/repository.port';
+import { IMessenger } from '@grindwise/domain/ports/messaging.port';
+import { IContentGeneratorPort } from '@grindwise/domain/ports/content-generator.port';
+import { MessageFormatter } from '@grindwise/shared/message-formatter';
 
 export class SendDueReviewsUseCase {
   constructor(
