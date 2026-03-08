@@ -3,7 +3,7 @@ import { User } from '../domain/entities/user.entity';
 import { OnMessageCallback } from './socket';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const baileys = require('baileys');
+const baileys = require('@whiskeysockets/baileys');
 type WASocket = ReturnType<typeof baileys.makeWASocket>;
 
 type BaileysMessage = {

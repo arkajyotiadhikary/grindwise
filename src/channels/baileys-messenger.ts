@@ -6,7 +6,7 @@ import {
 } from './messenger.interface';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const baileys = require('baileys');
+const baileys = require('@whiskeysockets/baileys');
 type WASocket = ReturnType<typeof baileys.makeWASocket>;
 
 const MAX_TEXT_LENGTH = 4096;

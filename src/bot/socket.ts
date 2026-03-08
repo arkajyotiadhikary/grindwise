@@ -1,8 +1,7 @@
 import { config } from '../config';
 
-// Baileys is ESM-only; use require() with esModuleInterop in CJS build
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const baileys = require('baileys');
+const baileys = require('@whiskeysockets/baileys');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const qrcode = require('qrcode-terminal');
 
@@ -19,6 +18,7 @@ const INITIAL_BACKOFF_MS = 3_000;
 const BACKOFF_MULTIPLIER = 2;
 const MAX_BACKOFF_MS = 60_000;
 const MAX_RETRIES = 10;
+let hasAttemptedAuthReset = false;
 
 export async function startBot(
   onMessage: OnMessageCallback,
@@ -38,20 +38,38 @@ async function connectWithBackoff(
       config.authStatePath,
     );
 
-    const sock: WASocket = baileys.makeWASocket({
+    // Fetch latest WA Web version to avoid 405 errors from outdated versions
+    let waVersion: [number, number, number] | undefined;
+    try {
+      const { version } = await baileys.fetchLatestBaileysVersion();
+      waVersion = version;
+      console.log(`[socket] Using WA Web version: ${version.join('.')}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[socket] Failed to fetch latest WA version, using default. ${msg}`);
+    }
+
+    const silentLogger = {
+      level: 'silent',
+      trace: () => {},
+      debug: () => {},
+      info: () => {},
+      warn: () => {},
+      error: () => {},
+      fatal: () => {},
+      child: () => silentLogger,
+    } as unknown;
+
+    const socketOptions: Record<string, unknown> = {
       auth: state,
       printQRInTerminal: false,
-      logger: {
-        level: 'silent',
-        trace: () => {},
-        debug: () => {},
-        info: () => {},
-        warn: () => {},
-        error: () => {},
-        fatal: () => {},
-        child: () => ({}),
-      } as unknown,
-    });
+      logger: silentLogger,
+    };
+    if (waVersion) {
+      socketOptions.version = waVersion;
+    }
+
+    const sock: WASocket = baileys.makeWASocket(socketOptions);
 
     sock.ev.on('creds.update', saveCreds);
 
@@ -70,6 +88,7 @@ async function connectWithBackoff(
         }
 
         if (connection === 'open') {
+          hasAttemptedAuthReset = false;
           console.log('✅ WhatsApp connection established');
           onReady(sock);
         }
@@ -77,13 +96,39 @@ async function connectWithBackoff(
         if (connection === 'close') {
           const statusCode: number =
             lastDisconnect?.error?.output?.statusCode ?? 0;
-          const isLoggedOut: boolean =
-            statusCode === baileys.DisconnectReason.loggedOut;
+          const NON_RECOVERABLE_CODES: number[] = [
+            baileys.DisconnectReason.loggedOut, // 401
+            405,
+          ];
+          const isNonRecoverable: boolean =
+            NON_RECOVERABLE_CODES.includes(statusCode);
 
-          if (isLoggedOut) {
-            console.error(
-              '[socket] Logged out — will not reconnect. Delete auth_state/ and restart.',
-            );
+          if (isNonRecoverable) {
+            if (!hasAttemptedAuthReset) {
+              hasAttemptedAuthReset = true;
+              console.log(
+                `[socket] Non-recoverable disconnect (${statusCode}). Clearing auth state for fresh QR...`,
+              );
+              const fs = await import('fs');
+              const path = await import('path');
+              const authDir = path.resolve(config.authStatePath);
+              if (fs.existsSync(authDir)) {
+                fs.rmSync(authDir, { recursive: true, force: true });
+              }
+              await connectWithBackoff(
+                onMessage,
+                onReady,
+                0,
+                INITIAL_BACKOFF_MS,
+              );
+            } else {
+              console.error(
+                `[socket] Disconnect (${statusCode}) persists after auth reset. Giving up.`,
+              );
+              console.error(
+                '[socket] This may be a Baileys version issue. Try updating @whiskeysockets/baileys.',
+              );
+            }
             return;
           }
 

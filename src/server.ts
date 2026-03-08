@@ -37,7 +37,7 @@ export function startExpressServer(di: DIContainer): void {
       res.json({ success: true, sent });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.error('[index] /admin/send-daily error', { error: msg });
+      console.error('[server] /admin/send-daily error', { error: msg });
       res.status(500).json({ error: msg });
     }
   });
@@ -54,7 +54,7 @@ export function startExpressServer(di: DIContainer): void {
       res.json({ success: true, user });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.error('[index] /admin/register error', { error: msg, phone });
+      console.error('[server] /admin/register error', { error: msg, phone });
       res.status(500).json({ error: msg });
     }
   });

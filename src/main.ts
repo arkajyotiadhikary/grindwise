@@ -8,7 +8,7 @@ import { createMessageHandler } from './bot/handlers';
 import { BaileysMessenger } from './channels/baileys-messenger';
 import { DIContainer } from './di-container';
 import { startScheduler } from './services/scheduler';
-import { startExpressServer } from './index';
+import { startExpressServer } from './server';
 
 async function main(): Promise<void> {
   console.log('');
