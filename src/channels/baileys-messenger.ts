@@ -86,6 +86,16 @@ export class BaileysMessenger implements IMessenger {
 
   async markRead(_messageId: string): Promise<void> {}
 
+  async showTyping(to: string): Promise<void> {
+    try {
+      const jid = this.resolveJid(to);
+      await this.sock.sendPresenceUpdate('composing', jid);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error('[BaileysMessenger] showTyping failed', { error: msg, to });
+    }
+  }
+
   private resolveJid(to: string): string {
     if (
       to.endsWith('@s.whatsapp.net') ||

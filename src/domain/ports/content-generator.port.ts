@@ -23,6 +23,11 @@ export interface RevisionSummary {
   connectsTo: string;
 }
 
+export interface DsaAnswerResult {
+  isDsaRelated: boolean;
+  answer: string;
+}
+
 export interface IContentGeneratorPort {
   generateTheory(topic: Topic): Promise<TheoryContent | null>;
   generateSolutionWalkthrough(
@@ -33,6 +38,7 @@ export interface IContentGeneratorPort {
     topic: Topic,
     reviewCount: number,
   ): Promise<RevisionSummary | null>;
+  askDsaQuestion(question: string): Promise<DsaAnswerResult | null>;
   formatTheoryMessage(
     topic: Topic,
     content: TheoryContent,

@@ -7,6 +7,7 @@ import {
   TheoryContent,
   SolutionWalkthrough,
   RevisionSummary,
+  DsaAnswerResult,
 } from '@grindwise/domain/ports/content-generator.port';
 import { Topic } from '@grindwise/domain/entities/topic.entity';
 import { Problem } from '@grindwise/domain/entities/problem.entity';
@@ -307,6 +308,44 @@ Rules:
     );
 
     return parts.join('\n');
+  }
+
+  async askDsaQuestion(question: string): Promise<DsaAnswerResult | null> {
+    const prompt = `You are a strict DSA (Data Structures & Algorithms) tutor bot. You ONLY answer questions related to DSA topics such as: arrays, strings, linked lists, stacks, queues, trees, graphs, hash maps, heaps, sorting, searching, recursion, dynamic programming, greedy algorithms, backtracking, bit manipulation, tries, union-find, segment trees, and related algorithmic concepts.
+
+User question: "${question}"
+
+First, determine if this question is about DSA or programming concepts directly related to DSA.
+
+If the question IS about DSA, respond with EXACTLY this format:
+DSA_RELATED: YES
+ANSWER:
+[Your concise answer here — micro-learning format, max 200 words]
+
+If the question is NOT about DSA (e.g., general chat, other programming topics, personal questions, etc.), respond with EXACTLY:
+DSA_RELATED: NO
+
+Rules:
+- Be concise and direct
+- No preamble phrases
+- Code examples in TypeScript if needed, max 8 lines
+- Only answer DSA questions — be strict about this`;
+
+    return this.safeGenerate(
+      prompt,
+      (raw) => this.parseDsaAnswer(raw),
+      { temperature: 0.3, maxTokens: 500 },
+      'askDsaQuestion',
+    );
+  }
+
+  private parseDsaAnswer(raw: string): DsaAnswerResult {
+    const isDsaRelated = /DSA_RELATED:\s*YES/i.test(raw);
+    if (!isDsaRelated) {
+      return { isDsaRelated: false, answer: '' };
+    }
+    const answer = extractSection(raw, 'ANSWER');
+    return { isDsaRelated: true, answer: answer || raw };
   }
 
   private async safeGenerate<T>(

@@ -189,6 +189,9 @@ export class MessageFormatter {
       '📝 *Tests:*',
       "  /test — Start today's test (weekend only)",
       '',
+      '💬 *Ask AI:*',
+      '  /ask <question> — Ask any DSA question',
+      '',
       '_Questions? Our system tracks your progress automatically!_',
     ].join('\n');
   }

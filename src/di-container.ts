@@ -17,6 +17,7 @@ import { SendWeeklyTestUseCase } from './application/use-cases/send-weekly-test.
 import { SubmitTestAnswerUseCase } from './application/use-cases/submit-test-answer.usecase';
 import { SendProgressReportUseCase } from './application/use-cases/send-progress-report.usecase';
 import { SendHelpUseCase } from './application/use-cases/send-help.usecase';
+import { AskDsaQuestionUseCase } from './application/use-cases/ask-dsa-question.usecase';
 
 /**
  * DIContainer wires all infrastructure adapters and application use cases.
@@ -108,6 +109,10 @@ export class DIContainer {
 
   getSendHelpUseCase(): SendHelpUseCase {
     return new SendHelpUseCase(this.repo, this.messenger);
+  }
+
+  getAskDsaQuestionUseCase(): AskDsaQuestionUseCase {
+    return new AskDsaQuestionUseCase(this.repo, this.messenger, this.contentGen);
   }
 
   getRepository(): IRepositoryPort {

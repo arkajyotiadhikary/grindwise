@@ -96,7 +96,20 @@ async function handleIncomingMessage(
     }
 
     user = repo.getUserByPhone(phone) ?? user;
-    const normalized = text?.toUpperCase().trim().replace(/^\//, '') ?? '';
+    const trimmedText = text?.trim() ?? '';
+    const normalized = trimmedText.toUpperCase().replace(/^\//, '');
+
+    await di.getMessenger().showTyping(phone);
+
+    const askMatch = /^\/?\s*ASK\s+/i.exec(trimmedText);
+    if (askMatch) {
+      const question = trimmedText.slice(askMatch[0].length).trim();
+      if (question.length > 0) {
+        await di.getAskDsaQuestionUseCase().execute(user, question);
+        return;
+      }
+    }
+
     await routeUserCommand(user, msg, normalized, di);
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);

@@ -30,5 +30,6 @@ export interface IMessenger {
     options: ListOption[],
   ): Promise<SendResult>;
   markRead(messageId: string): Promise<void>;
+  showTyping(to: string): Promise<void>;
   isBotMessage(messageId: string): boolean;
 }
