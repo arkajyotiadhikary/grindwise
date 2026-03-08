@@ -1,4 +1,9 @@
-import { IMessenger, SendResult, ButtonOption, ListOption } from './messenger.interface';
+import {
+  IMessenger,
+  SendResult,
+  ButtonOption,
+  ListOption,
+} from './messenger.interface';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const baileys = require('baileys');
@@ -13,14 +18,16 @@ function formatJid(phone: string): string {
 }
 
 function sanitizeText(text: string): string {
-  // Strip control characters except newline/tab, enforce length limit
   return text
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
     .trim()
     .slice(0, MAX_TEXT_LENGTH);
 }
 
-function buildNumberedMenu(body: string, options: Array<{ title: string }>): string {
+function buildNumberedMenu(
+  body: string,
+  options: Array<{ title: string }>,
+): string {
   const items = options.map((o, i) => `${i + 1}. ${o.title}`).join('\n');
   return `${body}\n\n${items}`;
 }
@@ -53,8 +60,6 @@ export class BaileysMessenger implements IMessenger {
     buttons: ButtonOption[],
     header?: string,
   ): Promise<SendResult> {
-    // Baileys on regular accounts does not support interactive button messages.
-    // Fall back to a numbered text menu.
     const headerPrefix = header ? `*${header}*\n\n` : '';
     const numbered = buildNumberedMenu(`${headerPrefix}${body}`, buttons);
     return this.sendText(to, numbered);
@@ -66,15 +71,11 @@ export class BaileysMessenger implements IMessenger {
     _buttonText: string,
     options: ListOption[],
   ): Promise<SendResult> {
-    // Fall back to numbered text menu.
     const numbered = buildNumberedMenu(body, options);
     return this.sendText(to, numbered);
   }
 
-  async markRead(_messageId: string): Promise<void> {
-    // No-op: read receipts via Baileys require the full message key object,
-    // not just an ID string. Left as a no-op to satisfy the interface.
-  }
+  async markRead(_messageId: string): Promise<void> {}
 
   private resolveJid(to: string): string {
     if (to.endsWith('@s.whatsapp.net') || to.endsWith('@g.us')) return to;
@@ -85,7 +86,9 @@ export class BaileysMessenger implements IMessenger {
     const now = Date.now();
     const elapsed = now - this.lastSent;
     if (elapsed < RATE_LIMIT_MS) {
-      await new Promise<void>(resolve => setTimeout(resolve, RATE_LIMIT_MS - elapsed));
+      await new Promise<void>((resolve) =>
+        setTimeout(resolve, RATE_LIMIT_MS - elapsed),
+      );
     }
     this.lastSent = Date.now();
   }

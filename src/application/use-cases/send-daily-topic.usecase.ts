@@ -23,16 +23,25 @@ export class SendDailyTopicUseCase {
       if (!topic) {
         await this.messenger.sendText(
           user.phone_number,
-          '🎉 *Congratulations!* You\'ve completed the NeetCode DSA roadmap! ' +
-            'You\'re ready to ace coding interviews. Keep practicing on LeetCode!',
+          "🎉 *Congratulations!* You've completed the NeetCode DSA roadmap! " +
+            "You're ready to ace coding interviews. Keep practicing on LeetCode!",
         );
         return;
       }
 
       const theoryContent = await this.contentGen.generateTheory(topic);
       const topicMsg = theoryContent
-        ? this.contentGen.formatTheoryMessage(topic, theoryContent, user.current_day, user.current_week)
-        : MessageFormatter.dailyTopic(topic, user.current_day, user.current_week);
+        ? this.contentGen.formatTheoryMessage(
+            topic,
+            theoryContent,
+            user.current_day,
+            user.current_week,
+          )
+        : MessageFormatter.dailyTopic(
+            topic,
+            user.current_day,
+            user.current_week,
+          );
 
       const result = await this.messenger.sendText(user.phone_number, topicMsg);
 
@@ -40,18 +49,25 @@ export class SendDailyTopicUseCase {
         this.repo.getOrCreateProgress(user.id, topic.id);
         this.repo.markTopicSent(user.id, topic.id);
         this.repo.logMessage(user.id, 'outbound', 'daily_topic', topicMsg);
-        console.log(`[SendDailyTopic] Sent topic "${topic.name}" to ${user.phone_number}`);
+        console.log(
+          `[SendDailyTopic] Sent topic "${topic.name}" to ${user.phone_number}`,
+        );
       }
 
       setTimeout(() => {
         this.sendDailyProblem.execute(user, topic).catch((err: unknown) => {
           const message = err instanceof Error ? err.message : String(err);
-          console.error('[SendDailyTopic] sendDailyProblem failed', { error: message });
+          console.error('[SendDailyTopic] sendDailyProblem failed', {
+            error: message,
+          });
         });
       }, 3000);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('[SendDailyTopic] execute failed', { error: message, phone: user.phone_number });
+      console.error('[SendDailyTopic] execute failed', {
+        error: message,
+        phone: user.phone_number,
+      });
       throw err;
     }
   }

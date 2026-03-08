@@ -9,7 +9,7 @@ export interface Topic {
   week_number: number;
   order_index: number;
   content: string;
-  key_concepts: string; // JSON
+  key_concepts: string;
   time_complexity: string;
   space_complexity: string;
 }

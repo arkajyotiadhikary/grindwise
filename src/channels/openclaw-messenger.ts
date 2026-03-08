@@ -1,4 +1,9 @@
-import { IMessenger, SendResult, ButtonOption, ListOption } from './messenger.interface';
+import {
+  IMessenger,
+  SendResult,
+  ButtonOption,
+  ListOption,
+} from './messenger.interface';
 import { OpenClawClient } from '../infrastructure/openclaw-client';
 
 export class OpenClawMessenger implements IMessenger {

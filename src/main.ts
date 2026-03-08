@@ -1,4 +1,7 @@
-import { initializeDatabase, getDatabase } from './adapters/persistence/sqlite/database';
+import {
+  initializeDatabase,
+  getDatabase,
+} from './adapters/persistence/sqlite/database';
 import { seedRoadmap } from './adapters/persistence/sqlite/seeder';
 import { startBot } from './bot/socket';
 import { createMessageHandler } from './bot/handlers';

@@ -1,4 +1,7 @@
-import { OllamaClient, OllamaGenerateOptions } from '@grindwise/infrastructure/ollama-client';
+import {
+  OllamaClient,
+  OllamaGenerateOptions,
+} from '@grindwise/infrastructure/ollama-client';
 import {
   IContentGeneratorPort,
   TheoryContent,
@@ -7,8 +10,6 @@ import {
 } from '@grindwise/domain/ports/content-generator.port';
 import { Topic } from '@grindwise/domain/entities/topic.entity';
 import { Problem } from '@grindwise/domain/entities/problem.entity';
-
-// ─── Section Parsers ──────────────────────────────────────────────────────────
 
 function extractSection(text: string, header: string): string {
   const pattern = new RegExp(
@@ -23,16 +24,16 @@ function extractBullets(text: string, header: string): string[] {
   const block = extractSection(text, header);
   return block
     .split('\n')
-    .map(line => line.replace(/^[-*•]\s*/, '').trim())
-    .filter(line => line.length > 0);
+    .map((line) => line.replace(/^[-*•]\s*/, '').trim())
+    .filter((line) => line.length > 0);
 }
 
 function extractNumberedList(text: string, header: string): string[] {
   const block = extractSection(text, header);
   return block
     .split('\n')
-    .map(line => line.replace(/^\d+[.)]\s*/, '').trim())
-    .filter(line => line.length > 0);
+    .map((line) => line.replace(/^\d+[.)]\s*/, '').trim())
+    .filter((line) => line.length > 0);
 }
 
 function stripCodeFences(raw: string): string {
@@ -42,16 +43,12 @@ function stripCodeFences(raw: string): string {
     .trim();
 }
 
-// ─── OllamaContentGeneratorAdapter ───────────────────────────────────────────
-
 export class OllamaContentGeneratorAdapter implements IContentGeneratorPort {
   private readonly ollama: OllamaClient;
 
   constructor(ollama: OllamaClient) {
     this.ollama = ollama;
   }
-
-  // ── Theory Generation ───────────────────────────────────────────────────────
 
   async generateTheory(topic: Topic): Promise<TheoryContent | null> {
     const keyConcepts = this.parseJson<string[]>(topic.key_concepts, []);
@@ -85,7 +82,7 @@ Rules:
 
     return this.safeGenerate(
       prompt,
-      raw => this.parseTheory(raw),
+      (raw) => this.parseTheory(raw),
       { temperature: 0.3, maxTokens: 450 },
       'generateTheory',
     );
@@ -93,7 +90,9 @@ Rules:
 
   private parseTheory(raw: string): TheoryContent {
     const codeMatch = /CODE_EXAMPLE:\s*([\s\S]*?)(?=\nANALOGY:|$)/i.exec(raw);
-    const codeBlock = codeMatch ? stripCodeFences(codeMatch[1].trim()) : undefined;
+    const codeBlock = codeMatch
+      ? stripCodeFences(codeMatch[1].trim())
+      : undefined;
 
     return {
       coreConcept: extractSection(raw, 'CORE_CONCEPT'),
@@ -102,8 +101,6 @@ Rules:
       analogy: extractSection(raw, 'ANALOGY') || undefined,
     };
   }
-
-  // ── Solution Walkthrough ────────────────────────────────────────────────────
 
   async generateSolutionWalkthrough(
     problem: Problem,
@@ -140,7 +137,7 @@ Rules:
 
     return this.safeGenerate(
       prompt,
-      raw => this.parseSolutionWalkthrough(raw),
+      (raw) => this.parseSolutionWalkthrough(raw),
       { temperature: 0.2, maxTokens: 420 },
       'generateSolutionWalkthrough',
     );
@@ -155,8 +152,6 @@ Rules:
       spaceComplexity: extractSection(raw, 'SPACE_COMPLEXITY'),
     };
   }
-
-  // ── Revision Summary ────────────────────────────────────────────────────────
 
   async generateRevisionSummary(
     topic: Topic,
@@ -192,7 +187,7 @@ Rules:
 
     return this.safeGenerate(
       prompt,
-      raw => this.parseRevisionSummary(raw),
+      (raw) => this.parseRevisionSummary(raw),
       { temperature: 0.3, maxTokens: 380 },
       'generateRevisionSummary',
     );
@@ -206,8 +201,6 @@ Rules:
       connectsTo: extractSection(raw, 'CONNECTS_TO'),
     };
   }
-
-  // ── Message Formatters ──────────────────────────────────────────────────────
 
   formatTheoryMessage(
     topic: Topic,
@@ -226,7 +219,7 @@ Rules:
 
     if (content.keyTakeaways.length > 0) {
       parts.push('🔑 *Key Takeaways:*');
-      content.keyTakeaways.forEach(t => parts.push(`  • ${t}`));
+      content.keyTakeaways.forEach((t) => parts.push(`  • ${t}`));
       parts.push('');
     }
 
@@ -242,14 +235,19 @@ Rules:
       parts.push('');
     }
 
-    parts.push(`⏱ *Time:* ${topic.time_complexity}  💾 *Space:* ${topic.space_complexity}`);
+    parts.push(
+      `⏱ *Time:* ${topic.time_complexity}  💾 *Space:* ${topic.space_complexity}`,
+    );
     parts.push('');
     parts.push("_Reply *PROBLEM* to get today's practice problem._");
 
     return parts.join('\n');
   }
 
-  formatSolutionMessage(problem: Problem, walkthrough: SolutionWalkthrough): string {
+  formatSolutionMessage(
+    problem: Problem,
+    walkthrough: SolutionWalkthrough,
+  ): string {
     const parts: string[] = [
       `✅ *Solution: ${problem.title}*`,
       '',
@@ -276,7 +274,11 @@ Rules:
     return parts.join('\n');
   }
 
-  formatRevisionMessage(topic: Topic, summary: RevisionSummary, daysAgo: number): string {
+  formatRevisionMessage(
+    topic: Topic,
+    summary: RevisionSummary,
+    daysAgo: number,
+  ): string {
     const parts: string[] = [
       `🔄 *Review: ${topic.name}*`,
       `_You learned this ${daysAgo} days ago — time to reinforce!_`,
@@ -285,13 +287,13 @@ Rules:
       '',
       '━━━━━━━━━━━━━━━━━━━━',
       '📌 *Must Remember:*',
-      ...summary.keyPoints.map(p => `  • ${p}`),
+      ...summary.keyPoints.map((p) => `  • ${p}`),
     ];
 
     if (summary.commonMistakes.length > 0) {
       parts.push('');
       parts.push('⚠️ *Common Mistakes:*');
-      summary.commonMistakes.forEach(m => parts.push(`  • ${m}`));
+      summary.commonMistakes.forEach((m) => parts.push(`  • ${m}`));
     }
 
     if (summary.connectsTo) {
@@ -300,12 +302,12 @@ Rules:
     }
 
     parts.push('');
-    parts.push('_Reply *RECALL* (easy), *FUZZY* (partial), or *BLANK* (forgot)_');
+    parts.push(
+      '_Reply *RECALL* (easy), *FUZZY* (partial), or *BLANK* (forgot)_',
+    );
 
     return parts.join('\n');
   }
-
-  // ── Private Helpers ─────────────────────────────────────────────────────────
 
   private async safeGenerate<T>(
     prompt: string,
@@ -317,7 +319,10 @@ Rules:
       const raw = await this.ollama.generate(prompt, options);
       return parser(raw);
     } catch (err) {
-      console.warn(`[OllamaContentGeneratorAdapter] ${context} failed:`, (err as Error).message);
+      console.warn(
+        `[OllamaContentGeneratorAdapter] ${context} failed:`,
+        (err as Error).message,
+      );
       return null;
     }
   }

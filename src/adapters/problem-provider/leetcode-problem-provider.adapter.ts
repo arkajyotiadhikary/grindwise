@@ -1,22 +1,26 @@
 import axios from 'axios';
 import { IRepositoryPort } from '@grindwise/domain/ports/repository.port';
-import { IProblemProviderPort, LeetCodeProblem } from '@grindwise/domain/ports/problem-provider.port';
+import {
+  IProblemProviderPort,
+  LeetCodeProblem,
+} from '@grindwise/domain/ports/problem-provider.port';
 
 const BASE_URL =
-  process.env['ALFA_LEETCODE_API_URL'] ?? 'https://alfa-leetcode-api.onrender.com';
+  process.env['ALFA_LEETCODE_API_URL'] ??
+  'https://alfa-leetcode-api.onrender.com';
 
 const CATEGORY_TO_TAGS: Record<string, string[]> = {
   'Arrays & Hashing': ['array', 'hash-table'],
   'Two Pointers': ['two-pointers'],
   'Sliding Window': ['sliding-window'],
-  'Stack': ['stack', 'monotonic-stack'],
+  Stack: ['stack', 'monotonic-stack'],
   'Binary Search': ['binary-search'],
   'Linked List': ['linked-list'],
-  'Trees': ['binary-tree', 'binary-search-tree'],
+  Trees: ['binary-tree', 'binary-search-tree'],
   'Heap / Priority Queue': ['heap-priority-queue'],
-  'Backtracking': ['backtracking'],
-  'Tries': ['trie'],
-  'Graphs': ['graph', 'depth-first-search', 'breadth-first-search'],
+  Backtracking: ['backtracking'],
+  Tries: ['trie'],
+  Graphs: ['graph', 'depth-first-search', 'breadth-first-search'],
   'Dynamic Programming': ['dynamic-programming'],
 };
 
@@ -46,12 +50,16 @@ export class LeetCodeProblemProviderAdapter implements IProblemProviderPort {
         titleSlug: String(data['titleSlug'] ?? ''),
         content: String(data['content'] ?? ''),
         difficulty: String(data['difficulty'] ?? ''),
-        topicTags: (data['topicTags'] as Array<{ name: string; slug: string }>) ?? [],
+        topicTags:
+          (data['topicTags'] as Array<{ name: string; slug: string }>) ?? [],
         hints: (data['hints'] as string[]) ?? [],
       };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
-      console.warn(`[LeetCodeProblemProviderAdapter] fetchProblemBySlug failed for "${slug}"`, { error: msg });
+      console.warn(
+        `[LeetCodeProblemProviderAdapter] fetchProblemBySlug failed for "${slug}"`,
+        { error: msg },
+      );
       return null;
     }
   }
@@ -78,18 +86,25 @@ export class LeetCodeProblemProviderAdapter implements IProblemProviderPort {
         description: cleanContent,
         difficulty: problem.difficulty,
         hints: JSON.stringify(problem.hints),
-        tags: JSON.stringify(problem.topicTags.map(t => t.name)),
+        tags: JSON.stringify(problem.topicTags.map((t) => t.name)),
         url: `https://leetcode.com/problems/${problem.titleSlug}/`,
       });
 
       console.log(`[LeetCodeProblemProviderAdapter] Synced: ${problem.title}`);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
-      console.error('[LeetCodeProblemProviderAdapter] syncProblemForTopic failed', { error: msg, topicId, slug });
+      console.error(
+        '[LeetCodeProblemProviderAdapter] syncProblemForTopic failed',
+        { error: msg, topicId, slug },
+      );
     }
   }
 
-  async fetchProblemsForCategory(category: string, topicId: string, limit = 3): Promise<void> {
+  async fetchProblemsForCategory(
+    category: string,
+    topicId: string,
+    limit = 3,
+  ): Promise<void> {
     const tags = CATEGORY_TO_TAGS[category] ?? [];
     if (tags.length === 0) return;
 
@@ -102,7 +117,8 @@ export class LeetCodeProblemProviderAdapter implements IProblemProviderPort {
       });
 
       const data = response.data as Record<string, unknown> | null;
-      const problems = (data?.['problemsetQuestionList'] as ProblemListItem[]) ?? [];
+      const problems =
+        (data?.['problemsetQuestionList'] as ProblemListItem[]) ?? [];
 
       for (const p of problems.slice(0, limit)) {
         await this.syncProblemForTopic(topicId, p.titleSlug);
@@ -110,11 +126,14 @@ export class LeetCodeProblemProviderAdapter implements IProblemProviderPort {
       }
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
-      console.warn(`[LeetCodeProblemProviderAdapter] fetchProblemsForCategory failed for "${category}"`, { error: msg });
+      console.warn(
+        `[LeetCodeProblemProviderAdapter] fetchProblemsForCategory failed for "${category}"`,
+        { error: msg },
+      );
     }
   }
 }
 
 function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

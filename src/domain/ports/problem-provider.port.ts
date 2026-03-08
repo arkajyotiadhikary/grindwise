@@ -11,5 +11,9 @@ export interface LeetCodeProblem {
 export interface IProblemProviderPort {
   fetchProblemBySlug(slug: string): Promise<LeetCodeProblem | null>;
   syncProblemForTopic(topicId: string, slug: string): Promise<void>;
-  fetchProblemsForCategory(category: string, topicId: string, limit?: number): Promise<void>;
+  fetchProblemsForCategory(
+    category: string,
+    topicId: string,
+    limit?: number,
+  ): Promise<void>;
 }

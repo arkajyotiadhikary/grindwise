@@ -8,12 +8,6 @@ import {
   TopicNode,
 } from '../value-objects/roadmap-position.vo';
 
-/**
- * CurriculumDomainService — the "brain" of the DSA learning system.
- *
- * Enforces strict NeetCode roadmap ordering (no random topic selection).
- * All progression is deterministic.
- */
 export class CurriculumDomainService {
   private readonly roadmapId: string;
 
@@ -26,7 +20,11 @@ export class CurriculumDomainService {
 
   getCurrentTopic(user: User): Topic | null {
     return (
-      this.repo.getTopicByDayWeek(user.current_day, user.current_week, this.roadmapId) ?? null
+      this.repo.getTopicByDayWeek(
+        user.current_day,
+        user.current_week,
+        this.roadmapId,
+      ) ?? null
     );
   }
 
@@ -39,11 +37,15 @@ export class CurriculumDomainService {
     if (!topic) return null;
 
     const totalWeeks = this.repo.getTotalWeeks(this.roadmapId);
-    const daysInCurrentWeek = this.repo.getDaysInWeek(user.current_week, this.roadmapId);
+    const daysInCurrentWeek = this.repo.getDaysInWeek(
+      user.current_week,
+      this.roadmapId,
+    );
 
     const isFirst = user.current_week === 1 && user.current_day === 1;
     const isLast =
-      user.current_week === totalWeeks && user.current_day === daysInCurrentWeek;
+      user.current_week === totalWeeks &&
+      user.current_day === daysInCurrentWeek;
 
     const position: RoadmapPosition = {
       weekNumber: user.current_week,
@@ -56,10 +58,16 @@ export class CurriculumDomainService {
 
   computeNextPosition(user: User): RoadmapPosition | null {
     const totalWeeks = this.repo.getTotalWeeks(this.roadmapId);
-    const daysInCurrentWeek = this.repo.getDaysInWeek(user.current_week, this.roadmapId);
+    const daysInCurrentWeek = this.repo.getDaysInWeek(
+      user.current_week,
+      this.roadmapId,
+    );
 
     if (user.current_day < daysInCurrentWeek) {
-      const nextTopic = this.getTopicAt(user.current_week, user.current_day + 1);
+      const nextTopic = this.getTopicAt(
+        user.current_week,
+        user.current_day + 1,
+      );
       if (!nextTopic) return null;
       return {
         weekNumber: user.current_week,
@@ -85,12 +93,20 @@ export class CurriculumDomainService {
     const next = this.computeNextPosition(user);
 
     if (!next) {
-      return { newDay: user.current_day, newWeek: user.current_week, isComplete: true };
+      return {
+        newDay: user.current_day,
+        newWeek: user.current_week,
+        isComplete: true,
+      };
     }
 
     this.repo.updateUserProgress(user.id, next.dayNumber, next.weekNumber);
 
-    return { newDay: next.dayNumber, newWeek: next.weekNumber, isComplete: false };
+    return {
+      newDay: next.dayNumber,
+      newWeek: next.weekNumber,
+      isComplete: false,
+    };
   }
 
   isComplete(user: User): boolean {
@@ -102,7 +118,9 @@ export class CurriculumDomainService {
     const totalTopics = allTopics.length;
 
     const currentOrder = this.getCurrentTopic(user)?.order_index ?? Infinity;
-    const completedTopics = allTopics.filter((t) => t.order_index < currentOrder).length;
+    const completedTopics = allTopics.filter(
+      (t) => t.order_index < currentOrder,
+    ).length;
 
     const percentageComplete =
       totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;

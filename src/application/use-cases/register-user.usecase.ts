@@ -25,7 +25,10 @@ export class RegisterUserUseCase {
       return user;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('[RegisterUser] execute failed', { error: message, phoneNumber });
+      console.error('[RegisterUser] execute failed', {
+        error: message,
+        phoneNumber,
+      });
       throw err;
     }
   }

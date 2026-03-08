@@ -23,7 +23,9 @@ export const NEETCODE_ROADMAP: TopicData[] = [
     description: 'Understanding arrays, indexing, and basic operations',
     category: 'Arrays & Hashing',
     difficulty: 'Beginner',
-    day_number: 1, week_number: 1, order_index: 1,
+    day_number: 1,
+    week_number: 1,
+    order_index: 1,
     content: `## Arrays: The Foundation of DSA
 
 An **array** is a contiguous block of memory storing elements of the same type. It's the most fundamental data structure.
@@ -64,9 +66,14 @@ function twoPointers(arr: number[]): void {
   }
 }
 \`\`\``,
-    key_concepts: ['Indexing', 'Memory layout', 'Two-pointer technique', 'Sliding window'],
+    key_concepts: [
+      'Indexing',
+      'Memory layout',
+      'Two-pointer technique',
+      'Sliding window',
+    ],
     time_complexity: 'Access: O(1), Search: O(n), Insert: O(n)',
-    space_complexity: 'O(n)'
+    space_complexity: 'O(n)',
   },
   {
     id: 'hashing-basics',
@@ -75,7 +82,9 @@ function twoPointers(arr: number[]): void {
     description: 'Hash tables, collision handling, and common patterns',
     category: 'Arrays & Hashing',
     difficulty: 'Beginner',
-    day_number: 2, week_number: 1, order_index: 2,
+    day_number: 2,
+    week_number: 1,
+    order_index: 2,
     content: `## Hash Maps & Sets
 
 A **hash map** (dictionary) stores key-value pairs with near-instant lookup using a hash function.
@@ -117,18 +126,26 @@ function frequencyCount(arr: number[]): Map<number, number> {
 ### Collision Handling
 - **Chaining**: Each bucket holds a linked list
 - **Open Addressing**: Find next empty slot (linear probing)`,
-    key_concepts: ['Hash function', 'Collision handling', 'Frequency counter', 'Complement lookup'],
+    key_concepts: [
+      'Hash function',
+      'Collision handling',
+      'Frequency counter',
+      'Complement lookup',
+    ],
     time_complexity: 'Average O(1) for get/set/has; O(n) worst case',
-    space_complexity: 'O(n)'
+    space_complexity: 'O(n)',
   },
   {
     id: 'sliding-window',
     roadmap_id: 'neetcode',
     name: 'Sliding Window',
-    description: 'Efficiently process subarrays/substrings with a moving window',
+    description:
+      'Efficiently process subarrays/substrings with a moving window',
     category: 'Arrays & Hashing',
     difficulty: 'Intermediate',
-    day_number: 3, week_number: 1, order_index: 3,
+    day_number: 3,
+    week_number: 1,
+    order_index: 3,
     content: `## Sliding Window Technique
 
 The sliding window pattern maintains a **window** over a subset of data, expanding or shrinking it to satisfy a condition — without reprocessing elements.
@@ -167,9 +184,14 @@ function longestSubarrayWithSumK(arr: number[], k: number): number {
 - Contiguous subarray/substring problems
 - Finding max/min/longest/shortest with a constraint
 - Problems with "at most K" or "exactly K" distinct elements`,
-    key_concepts: ['Fixed window', 'Variable window', 'Two pointers', 'Window invariant'],
+    key_concepts: [
+      'Fixed window',
+      'Variable window',
+      'Two pointers',
+      'Window invariant',
+    ],
     time_complexity: 'O(n) — each element added/removed at most once',
-    space_complexity: 'O(1) to O(k) depending on problem'
+    space_complexity: 'O(1) to O(k) depending on problem',
   },
   {
     id: 'two-pointers',
@@ -178,7 +200,9 @@ function longestSubarrayWithSumK(arr: number[], k: number): number {
     description: 'Solving array problems with two index pointers',
     category: 'Arrays & Hashing',
     difficulty: 'Beginner',
-    day_number: 4, week_number: 1, order_index: 4,
+    day_number: 4,
+    week_number: 1,
+    order_index: 4,
     content: `## Two Pointers Pattern
 
 Use two pointers moving toward each other (or in the same direction) to reduce O(n²) brute force to O(n).
@@ -213,9 +237,14 @@ function removeDuplicates(nums: number[]): number {
 
 ### Key Insight
 Sorted arrays unlock two-pointer potential — the sorted order lets you make decisions about which pointer to move.`,
-    key_concepts: ['Opposite ends', 'Fast & slow pointers', 'Sorted array tricks', 'In-place modification'],
+    key_concepts: [
+      'Opposite ends',
+      'Fast & slow pointers',
+      'Sorted array tricks',
+      'In-place modification',
+    ],
     time_complexity: 'O(n)',
-    space_complexity: 'O(1)'
+    space_complexity: 'O(1)',
   },
   {
     id: 'stack-basics',
@@ -224,7 +253,9 @@ Sorted arrays unlock two-pointer potential — the sorted order lets you make de
     description: 'LIFO structure for tracking state and matching problems',
     category: 'Stack',
     difficulty: 'Beginner',
-    day_number: 5, week_number: 1, order_index: 5,
+    day_number: 5,
+    week_number: 1,
+    order_index: 5,
     content: `## Stack: Last In, First Out
 
 A **stack** follows LIFO order — the last element pushed is the first popped. Think of a stack of plates.
@@ -265,9 +296,14 @@ function nextGreater(nums: number[]): number[] {
 - Expression evaluation
 - Undo/redo operations
 - DFS traversal (iterative)`,
-    key_concepts: ['LIFO', 'Monotonic stack', 'Balanced brackets', 'Call stack simulation'],
+    key_concepts: [
+      'LIFO',
+      'Monotonic stack',
+      'Balanced brackets',
+      'Call stack simulation',
+    ],
     time_complexity: 'Push/Pop/Peek: O(1)',
-    space_complexity: 'O(n)'
+    space_complexity: 'O(n)',
   },
 
   // ─── WEEK 2: Binary Search & Linked Lists ─────────────────────────
@@ -275,10 +311,13 @@ function nextGreater(nums: number[]): number[] {
     id: 'binary-search',
     roadmap_id: 'neetcode',
     name: 'Binary Search',
-    description: 'Efficiently searching sorted data by halving the search space',
+    description:
+      'Efficiently searching sorted data by halving the search space',
     category: 'Binary Search',
     difficulty: 'Intermediate',
-    day_number: 1, week_number: 2, order_index: 6,
+    day_number: 1,
+    week_number: 2,
+    order_index: 6,
     content: `## Binary Search
 
 Binary search finds a target in a **sorted** array by repeatedly halving the search space, achieving O(log n).
@@ -328,18 +367,26 @@ function shipDays(weights: number[], days: number): number {
   return left;
 }
 \`\`\``,
-    key_concepts: ['Search space halving', 'Left/right bounds', 'Binary search on answer', 'Overflow prevention'],
+    key_concepts: [
+      'Search space halving',
+      'Left/right bounds',
+      'Binary search on answer',
+      'Overflow prevention',
+    ],
     time_complexity: 'O(log n)',
-    space_complexity: 'O(1)'
+    space_complexity: 'O(1)',
   },
   {
     id: 'linked-list-basics',
     roadmap_id: 'neetcode',
     name: 'Linked Lists',
-    description: 'Nodes connected by pointers — dynamic size, O(1) insert/delete',
+    description:
+      'Nodes connected by pointers — dynamic size, O(1) insert/delete',
     category: 'Linked List',
     difficulty: 'Beginner',
-    day_number: 2, week_number: 2, order_index: 7,
+    day_number: 2,
+    week_number: 2,
+    order_index: 7,
     content: `## Linked Lists
 
 A **linked list** is a chain of nodes where each node stores data and a pointer to the next node.
@@ -400,9 +447,14 @@ function hasCycle(head: ListNode | null): boolean {
 | Access     | O(1)  | O(n)       |
 | Insert/Del | O(n)  | O(1)*      |
 | Memory     | Contiguous | Scattered |`,
-    key_concepts: ['Node pointers', 'Reversal', "Floyd's cycle detection", 'Dummy node technique'],
+    key_concepts: [
+      'Node pointers',
+      'Reversal',
+      "Floyd's cycle detection",
+      'Dummy node technique',
+    ],
     time_complexity: 'Traversal: O(n), Insert/Delete with pointer: O(1)',
-    space_complexity: 'O(n)'
+    space_complexity: 'O(n)',
   },
   {
     id: 'trees-basics',
@@ -411,7 +463,9 @@ function hasCycle(head: ListNode | null): boolean {
     description: 'Tree structure, DFS (pre/in/post order), and BFS',
     category: 'Trees',
     difficulty: 'Intermediate',
-    day_number: 3, week_number: 2, order_index: 8,
+    day_number: 3,
+    week_number: 2,
+    order_index: 8,
     content: `## Binary Trees
 
 A **binary tree** is a hierarchical structure where each node has at most two children (left and right).
@@ -470,9 +524,14 @@ function levelOrder(root: TreeNode | null): number[][] {
   return result;
 }
 \`\`\``,
-    key_concepts: ['Inorder/Preorder/Postorder', 'BFS level order', 'Height/depth', 'Recursive tree patterns'],
+    key_concepts: [
+      'Inorder/Preorder/Postorder',
+      'BFS level order',
+      'Height/depth',
+      'Recursive tree patterns',
+    ],
     time_complexity: 'O(n) for all traversals',
-    space_complexity: 'O(h) for DFS where h=height, O(n) for BFS'
+    space_complexity: 'O(h) for DFS where h=height, O(n) for BFS',
   },
   {
     id: 'bst',
@@ -481,7 +540,9 @@ function levelOrder(root: TreeNode | null): number[][] {
     description: 'BST properties, insertion, deletion, and validation',
     category: 'Trees',
     difficulty: 'Intermediate',
-    day_number: 4, week_number: 2, order_index: 9,
+    day_number: 4,
+    week_number: 2,
+    order_index: 9,
     content: `## Binary Search Trees (BST)
 
 A BST maintains the **BST property**: for every node, all values in the left subtree are smaller, and all values in the right subtree are larger.
@@ -530,9 +591,14 @@ function isValidBST(
          isValidBST(node.right, node.val, max);
 }
 \`\`\``,
-    key_concepts: ['BST property', 'Search O(log n)', 'Inorder sorted output', 'BST validation'],
+    key_concepts: [
+      'BST property',
+      'Search O(log n)',
+      'Inorder sorted output',
+      'BST validation',
+    ],
     time_complexity: 'Average O(log n), Worst O(n) for skewed tree',
-    space_complexity: 'O(h)'
+    space_complexity: 'O(h)',
   },
   {
     id: 'heap-priority-queue',
@@ -541,7 +607,9 @@ function isValidBST(
     description: 'Efficiently get min/max elements with a heap structure',
     category: 'Heap / Priority Queue',
     difficulty: 'Intermediate',
-    day_number: 5, week_number: 2, order_index: 10,
+    day_number: 5,
+    week_number: 2,
+    order_index: 10,
     content: `## Heap / Priority Queue
 
 A **heap** is a complete binary tree satisfying the heap property:
@@ -607,9 +675,14 @@ class MinHeap {
 - **K largest/smallest elements**: Use opposite heap of size K
 - **Merge K sorted lists**: Min-heap of (val, listIndex)
 - **Median of stream**: Two heaps (max-heap left, min-heap right)`,
-    key_concepts: ['Heap property', 'Bubble up/Sink down', 'K-th element pattern', 'Two-heap median'],
+    key_concepts: [
+      'Heap property',
+      'Bubble up/Sink down',
+      'K-th element pattern',
+      'Two-heap median',
+    ],
     time_complexity: 'Insert/Delete: O(log n), Peek: O(1)',
-    space_complexity: 'O(n)'
+    space_complexity: 'O(n)',
   },
 
   // ─── WEEK 3: Graphs & Dynamic Programming ─────────────────────────
@@ -617,10 +690,13 @@ class MinHeap {
     id: 'graph-basics',
     roadmap_id: 'neetcode',
     name: 'Graphs: BFS & DFS',
-    description: 'Graph representation, BFS for shortest path, DFS for traversal',
+    description:
+      'Graph representation, BFS for shortest path, DFS for traversal',
     category: 'Graphs',
     difficulty: 'Intermediate',
-    day_number: 1, week_number: 3, order_index: 11,
+    day_number: 1,
+    week_number: 3,
+    order_index: 11,
     content: `## Graphs
 
 A **graph** consists of vertices (nodes) and edges (connections). Unlike trees, graphs can have cycles.
@@ -688,9 +764,14 @@ function countComponents(n: number, edges: number[][]): number {
   return count;
 }
 \`\`\``,
-    key_concepts: ['Adjacency list/matrix', 'BFS shortest path', 'DFS connected components', 'Visited set'],
+    key_concepts: [
+      'Adjacency list/matrix',
+      'BFS shortest path',
+      'DFS connected components',
+      'Visited set',
+    ],
     time_complexity: 'BFS/DFS: O(V + E)',
-    space_complexity: 'O(V + E)'
+    space_complexity: 'O(V + E)',
   },
   {
     id: 'dynamic-programming-1d',
@@ -699,7 +780,9 @@ function countComponents(n: number, edges: number[][]): number {
     description: 'Memoization and tabulation for overlapping subproblems',
     category: 'Dynamic Programming',
     difficulty: 'Advanced',
-    day_number: 2, week_number: 3, order_index: 12,
+    day_number: 2,
+    week_number: 3,
+    order_index: 12,
     content: `## Dynamic Programming (1D)
 
 DP solves problems by breaking them into **overlapping subproblems** and storing results (memoization/tabulation) to avoid recomputation.
@@ -758,9 +841,15 @@ function rob(nums: number[]): number {
 2. Find the **recurrence relation** (dp[i] = f(dp[i-1], ...))
 3. Define **base cases**
 4. Determine the **iteration order**`,
-    key_concepts: ['Memoization', 'Tabulation', 'State definition', 'Recurrence relation', 'Space optimization'],
+    key_concepts: [
+      'Memoization',
+      'Tabulation',
+      'State definition',
+      'Recurrence relation',
+      'Space optimization',
+    ],
     time_complexity: 'O(n) after memoization (vs O(2^n) brute force)',
-    space_complexity: 'O(n) tabulation, O(1) space-optimized'
+    space_complexity: 'O(n) tabulation, O(1) space-optimized',
   },
   {
     id: 'dynamic-programming-2d',
@@ -769,7 +858,9 @@ function rob(nums: number[]): number {
     description: '2D DP tables for grid and string problems',
     category: 'Dynamic Programming',
     difficulty: 'Advanced',
-    day_number: 3, week_number: 3, order_index: 13,
+    day_number: 3,
+    week_number: 3,
+    order_index: 13,
     content: `## 2D Dynamic Programming
 
 2D DP uses a matrix where dp[i][j] represents the solution for a subproblem involving the first i and j elements.
@@ -825,16 +916,19 @@ function uniquePaths(m: number, n: number): number {
 \`\`\``,
     key_concepts: ['LCS', 'Knapsack', 'Grid DP', 'String DP', 'Edit distance'],
     time_complexity: 'O(m × n)',
-    space_complexity: 'O(m × n), often reducible to O(n)'
+    space_complexity: 'O(m × n), often reducible to O(n)',
   },
   {
     id: 'backtracking',
     roadmap_id: 'neetcode',
     name: 'Backtracking',
-    description: 'Explore all possibilities systematically, pruning invalid paths',
+    description:
+      'Explore all possibilities systematically, pruning invalid paths',
     category: 'Backtracking',
     difficulty: 'Advanced',
-    day_number: 4, week_number: 3, order_index: 14,
+    day_number: 4,
+    week_number: 3,
+    order_index: 14,
     content: `## Backtracking
 
 Backtracking is a systematic way to explore all possible solutions by building candidates incrementally and **abandoning** (backtracking) when a constraint is violated.
@@ -896,9 +990,14 @@ function subsets(nums: number[]): number[][] {
   return result;
 }
 \`\`\``,
-    key_concepts: ['State space tree', 'Pruning', 'Choose-explore-unchoose', 'Permutations/Subsets/Combinations'],
+    key_concepts: [
+      'State space tree',
+      'Pruning',
+      'Choose-explore-unchoose',
+      'Permutations/Subsets/Combinations',
+    ],
     time_complexity: 'O(n! to 2^n depending on problem)',
-    space_complexity: 'O(n) recursion depth'
+    space_complexity: 'O(n) recursion depth',
   },
   {
     id: 'tries',
@@ -907,7 +1006,9 @@ function subsets(nums: number[]): number[][] {
     description: 'Tree structure for efficient string prefix operations',
     category: 'Tries',
     difficulty: 'Intermediate',
-    day_number: 5, week_number: 3, order_index: 15,
+    day_number: 5,
+    week_number: 3,
+    order_index: 15,
     content: `## Tries (Prefix Trees)
 
 A **trie** is a tree where each node represents a character, and paths from root to leaf form words. Perfect for prefix-based string operations.
@@ -977,18 +1078,34 @@ class Trie {
 - Word dictionary problems
 - Prefix matching
 - Spell checkers`,
-    key_concepts: ['Prefix storage', 'Character-by-character insertion', 'Autocomplete', 'Word search'],
+    key_concepts: [
+      'Prefix storage',
+      'Character-by-character insertion',
+      'Autocomplete',
+      'Word search',
+    ],
     time_complexity: 'Insert/Search: O(L) where L = word length',
-    space_complexity: 'O(N × L) where N = number of words'
-  }
+    space_complexity: 'O(N × L) where N = number of words',
+  },
 ];
 
-export const NEETCODE_PROBLEMS: Record<string, { title: string; leetcode_slug: string; difficulty: string; solution_code: string; solution_explanation: string; hints: string[] }[]> = {
-  'arrays-basics': [{
-    title: 'Two Sum',
-    leetcode_slug: 'two-sum',
-    difficulty: 'Easy',
-    solution_code: `function twoSum(nums: number[], target: number): number[] {
+export const NEETCODE_PROBLEMS: Record<
+  string,
+  {
+    title: string;
+    leetcode_slug: string;
+    difficulty: string;
+    solution_code: string;
+    solution_explanation: string;
+    hints: string[];
+  }[]
+> = {
+  'arrays-basics': [
+    {
+      title: 'Two Sum',
+      leetcode_slug: 'two-sum',
+      difficulty: 'Easy',
+      solution_code: `function twoSum(nums: number[], target: number): number[] {
   const map = new Map<number, number>();
   for (let i = 0; i < nums.length; i++) {
     const complement = target - nums[i];
@@ -997,14 +1114,21 @@ export const NEETCODE_PROBLEMS: Record<string, { title: string; leetcode_slug: s
   }
   return [];
 }`,
-    solution_explanation: 'Use a hash map to store each number and its index. For each number, check if its complement (target - num) already exists in the map. This reduces O(n²) brute force to O(n).',
-    hints: ['What is the complement of nums[i]?', 'Can you use a hash map to check for complement in O(1)?', 'Store index alongside value in the map']
-  }],
-  'hashing-basics': [{
-    title: 'Valid Anagram',
-    leetcode_slug: 'valid-anagram',
-    difficulty: 'Easy',
-    solution_code: `function isAnagram(s: string, t: string): boolean {
+      solution_explanation:
+        'Use a hash map to store each number and its index. For each number, check if its complement (target - num) already exists in the map. This reduces O(n²) brute force to O(n).',
+      hints: [
+        'What is the complement of nums[i]?',
+        'Can you use a hash map to check for complement in O(1)?',
+        'Store index alongside value in the map',
+      ],
+    },
+  ],
+  'hashing-basics': [
+    {
+      title: 'Valid Anagram',
+      leetcode_slug: 'valid-anagram',
+      difficulty: 'Easy',
+      solution_code: `function isAnagram(s: string, t: string): boolean {
   if (s.length !== t.length) return false;
   const count = new Map<string, number>();
   for (const c of s) count.set(c, (count.get(c) ?? 0) + 1);
@@ -1014,14 +1138,21 @@ export const NEETCODE_PROBLEMS: Record<string, { title: string; leetcode_slug: s
   }
   return true;
 }`,
-    solution_explanation: 'Count character frequencies in s using a hash map. Then decrement counts while scanning t. If any count goes to 0 or a character is missing, they\'re not anagrams.',
-    hints: ['Two strings are anagrams if they have the same character counts', 'Use a frequency map for the first string', 'Decrement frequencies while scanning the second string']
-  }],
-  'binary-search': [{
-    title: 'Binary Search',
-    leetcode_slug: 'binary-search',
-    difficulty: 'Easy',
-    solution_code: `function search(nums: number[], target: number): number {
+      solution_explanation:
+        "Count character frequencies in s using a hash map. Then decrement counts while scanning t. If any count goes to 0 or a character is missing, they're not anagrams.",
+      hints: [
+        'Two strings are anagrams if they have the same character counts',
+        'Use a frequency map for the first string',
+        'Decrement frequencies while scanning the second string',
+      ],
+    },
+  ],
+  'binary-search': [
+    {
+      title: 'Binary Search',
+      leetcode_slug: 'binary-search',
+      difficulty: 'Easy',
+      solution_code: `function search(nums: number[], target: number): number {
   let left = 0, right = nums.length - 1;
   while (left <= right) {
     const mid = left + Math.floor((right - left) / 2);
@@ -1031,7 +1162,13 @@ export const NEETCODE_PROBLEMS: Record<string, { title: string; leetcode_slug: s
   }
   return -1;
 }`,
-    solution_explanation: 'Classic binary search. Maintain left and right pointers. Compute mid and compare with target. Adjust the search boundary based on comparison. Use left + (right-left)/2 to prevent integer overflow.',
-    hints: ['The array is sorted — use this property!', 'If mid < target, target must be in right half', 'Prevent overflow: use left + (right-left)/2 instead of (left+right)/2']
-  }]
+      solution_explanation:
+        'Classic binary search. Maintain left and right pointers. Compute mid and compare with target. Adjust the search boundary based on comparison. Use left + (right-left)/2 to prevent integer overflow.',
+      hints: [
+        'The array is sorted — use this property!',
+        'If mid < target, target must be in right half',
+        'Prevent overflow: use left + (right-left)/2 instead of (left+right)/2',
+      ],
+    },
+  ],
 };

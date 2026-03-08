@@ -18,7 +18,7 @@ export class SendDueReviewsUseCase {
       if (!dueReviews.length) {
         await this.messenger.sendText(
           user.phone_number,
-          '✅ *No reviews due today!*\n\nYou\'re all caught up. Great work staying consistent!',
+          "✅ *No reviews due today!*\n\nYou're all caught up. Great work staying consistent!",
         );
         return;
       }
@@ -56,7 +56,10 @@ export class SendDueReviewsUseCase {
       this.repo.logMessage(user.id, 'outbound', 'reminder', reviewMsg);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('[SendDueReviews] execute failed', { error: message, phone: user.phone_number });
+      console.error('[SendDueReviews] execute failed', {
+        error: message,
+        phone: user.phone_number,
+      });
       throw err;
     }
   }

@@ -25,9 +25,27 @@ export interface RevisionSummary {
 
 export interface IContentGeneratorPort {
   generateTheory(topic: Topic): Promise<TheoryContent | null>;
-  generateSolutionWalkthrough(problem: Problem, topic: Topic): Promise<SolutionWalkthrough | null>;
-  generateRevisionSummary(topic: Topic, reviewCount: number): Promise<RevisionSummary | null>;
-  formatTheoryMessage(topic: Topic, content: TheoryContent, dayNumber: number, weekNumber: number): string;
-  formatSolutionMessage(problem: Problem, walkthrough: SolutionWalkthrough): string;
-  formatRevisionMessage(topic: Topic, summary: RevisionSummary, daysAgo: number): string;
+  generateSolutionWalkthrough(
+    problem: Problem,
+    topic: Topic,
+  ): Promise<SolutionWalkthrough | null>;
+  generateRevisionSummary(
+    topic: Topic,
+    reviewCount: number,
+  ): Promise<RevisionSummary | null>;
+  formatTheoryMessage(
+    topic: Topic,
+    content: TheoryContent,
+    dayNumber: number,
+    weekNumber: number,
+  ): string;
+  formatSolutionMessage(
+    problem: Problem,
+    walkthrough: SolutionWalkthrough,
+  ): string;
+  formatRevisionMessage(
+    topic: Topic,
+    summary: RevisionSummary,
+    daysAgo: number,
+  ): string;
 }

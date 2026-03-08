@@ -21,7 +21,11 @@ export class SendWeeklyTestUseCase {
         return;
       }
 
-      const testId = this.repo.createWeeklyTest(user.id, user.current_week, questions);
+      const testId = this.repo.createWeeklyTest(
+        user.id,
+        user.current_week,
+        questions,
+      );
 
       await this.messenger.sendText(
         user.phone_number,
@@ -29,7 +33,7 @@ export class SendWeeklyTestUseCase {
           `You'll answer ${questions.length} questions covering this week's topics.\n\n` +
           'Reply with A, B, C, or D for MCQs, True/False for T/F questions, ' +
           'or your answer for fill-in-the-blank.\n\n' +
-          '_Type SKIP to skip a question._\n\nReady? Here\'s Question 1:',
+          "_Type SKIP to skip a question._\n\nReady? Here's Question 1:",
       );
 
       const q = questions[0];
@@ -54,10 +58,18 @@ export class SendWeeklyTestUseCase {
         );
       }
 
-      this.repo.logMessage(user.id, 'outbound', 'test', `Weekly test week ${user.current_week}`);
+      this.repo.logMessage(
+        user.id,
+        'outbound',
+        'test',
+        `Weekly test week ${user.current_week}`,
+      );
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('[SendWeeklyTest] execute failed', { error: message, phone: user.phone_number });
+      console.error('[SendWeeklyTest] execute failed', {
+        error: message,
+        phone: user.phone_number,
+      });
       throw err;
     }
   }

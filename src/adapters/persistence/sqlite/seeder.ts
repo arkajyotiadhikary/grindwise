@@ -1,5 +1,8 @@
 import { getDatabase } from './database';
-import { NEETCODE_ROADMAP, NEETCODE_PROBLEMS } from '@grindwise/data/neetcode-roadmap';
+import {
+  NEETCODE_ROADMAP,
+  NEETCODE_PROBLEMS,
+} from '@grindwise/data/neetcode-roadmap';
 import { v4 as uuidv4 } from 'uuid';
 
 export function seedRoadmap(): void {
@@ -48,7 +51,12 @@ export function seedRoadmap(): void {
         });
       }
 
-      seedTestQuestionsForTopic(insertTestQuestion, topic.id, topic.name, topic.key_concepts);
+      seedTestQuestionsForTopic(
+        insertTestQuestion,
+        topic.id,
+        topic.name,
+        topic.key_concepts,
+      );
     }
   });
 
@@ -58,7 +66,12 @@ export function seedRoadmap(): void {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function seedTestQuestionsForTopic(stmt: any, topicId: string, topicName: string, keyConcepts: string[]): void {
+function seedTestQuestionsForTopic(
+  stmt: any,
+  topicId: string,
+  topicName: string,
+  keyConcepts: string[],
+): void {
   const questions: Array<{
     question: string;
     type: string;
@@ -71,19 +84,28 @@ function seedTestQuestionsForTopic(stmt: any, topicId: string, topicName: string
   if (topicId === 'arrays-basics') {
     questions.push(
       {
-        question: 'What is the time complexity of accessing an element in an array by index?',
+        question:
+          'What is the time complexity of accessing an element in an array by index?',
         type: 'mcq',
         options: ['O(1)', 'O(log n)', 'O(n)', 'O(n²)'],
         correct_answer: 'O(1)',
-        explanation: 'Arrays store elements in contiguous memory. Index calculation (base + i × size) is constant time.',
+        explanation:
+          'Arrays store elements in contiguous memory. Index calculation (base + i × size) is constant time.',
         difficulty: 'Easy',
       },
       {
-        question: 'Which technique uses two indices moving toward each other to solve array problems?',
+        question:
+          'Which technique uses two indices moving toward each other to solve array problems?',
         type: 'mcq',
-        options: ['Sliding Window', 'Two Pointer', 'Divide and Conquer', 'Greedy'],
+        options: [
+          'Sliding Window',
+          'Two Pointer',
+          'Divide and Conquer',
+          'Greedy',
+        ],
         correct_answer: 'Two Pointer',
-        explanation: 'Two Pointer places pointers at opposite ends of the array and moves them toward each other.',
+        explanation:
+          'Two Pointer places pointers at opposite ends of the array and moves them toward each other.',
         difficulty: 'Easy',
       },
     );
@@ -94,7 +116,8 @@ function seedTestQuestionsForTopic(stmt: any, topicId: string, topicName: string
         type: 'mcq',
         options: ['O(n)', 'O(log n)', 'O(n log n)', 'O(1)'],
         correct_answer: 'O(log n)',
-        explanation: 'Binary search halves the search space each iteration: n → n/2 → n/4 → ... → 1, which is log₂(n) steps.',
+        explanation:
+          'Binary search halves the search space each iteration: n → n/2 → n/4 → ... → 1, which is log₂(n) steps.',
         difficulty: 'Easy',
       },
       {
@@ -102,17 +125,25 @@ function seedTestQuestionsForTopic(stmt: any, topicId: string, topicName: string
         type: 'fill_blank',
         options: [],
         correct_answer: 'sorted',
-        explanation: 'Binary search relies on the sorted order to eliminate half the search space each step.',
+        explanation:
+          'Binary search relies on the sorted order to eliminate half the search space each step.',
         difficulty: 'Easy',
       },
     );
   } else if (topicId === 'dynamic-programming-1d') {
     questions.push({
-      question: 'Which of these is NOT a requirement for a problem to be solvable with Dynamic Programming?',
+      question:
+        'Which of these is NOT a requirement for a problem to be solvable with Dynamic Programming?',
       type: 'mcq',
-      options: ['Optimal substructure', 'Overlapping subproblems', 'Sorted input', 'Defined state'],
+      options: [
+        'Optimal substructure',
+        'Overlapping subproblems',
+        'Sorted input',
+        'Defined state',
+      ],
       correct_answer: 'Sorted input',
-      explanation: 'DP requires optimal substructure and overlapping subproblems. Input being sorted is not a requirement.',
+      explanation:
+        'DP requires optimal substructure and overlapping subproblems. Input being sorted is not a requirement.',
       difficulty: 'Medium',
     });
   }
@@ -126,7 +157,6 @@ function seedTestQuestionsForTopic(stmt: any, topicId: string, topicName: string
     difficulty: 'Easy',
   });
 
-  // Suppress unused-variable warning for keyConcepts (retained for future use)
   void keyConcepts;
 
   for (const q of questions) {

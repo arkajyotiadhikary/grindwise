@@ -33,7 +33,10 @@ export class SendDailyProblemUseCase {
       this.repo.logMessage(user.id, 'outbound', 'problem', problemMsg);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('[SendDailyProblem] execute failed', { error: message, phone: user.phone_number });
+      console.error('[SendDailyProblem] execute failed', {
+        error: message,
+        phone: user.phone_number,
+      });
       throw err;
     }
   }

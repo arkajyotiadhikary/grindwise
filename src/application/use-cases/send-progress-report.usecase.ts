@@ -27,7 +27,10 @@ export class SendProgressReportUseCase {
       this.repo.logMessage(user.id, 'outbound', 'progress', progressMsg);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('[SendProgressReport] execute failed', { error: message, phone: user.phone_number });
+      console.error('[SendProgressReport] execute failed', {
+        error: message,
+        phone: user.phone_number,
+      });
       throw err;
     }
   }

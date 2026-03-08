@@ -2,9 +2,11 @@
 
 ## Pattern
 
-**Domain-Driven Design (DDD)** with **Hexagonal Architecture** (Ports & Adapters).
+**Domain-Driven Design (DDD)** with **Hexagonal Architecture** (Ports &
+Adapters).
 
-All dependencies point inward: delivery and infrastructure depend on the domain — never the reverse.
+All dependencies point inward: delivery and infrastructure depend on the domain
+— never the reverse.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -106,8 +108,10 @@ src/
 1. **Domain** depends on nothing. Ports are interfaces defined here.
 2. **Application** depends on Domain only (ports + entities).
 3. **Adapters** implement Domain ports. They may use infrastructure clients.
-4. **Delivery** (bot, HTTP, scheduler) depends on the DI container to get use cases. No business logic in delivery.
-5. **Infrastructure** clients are low-level I/O wrappers. They have no knowledge of domain concepts.
+4. **Delivery** (bot, HTTP, scheduler) depends on the DI container to get use
+   cases. No business logic in delivery.
+5. **Infrastructure** clients are low-level I/O wrappers. They have no knowledge
+   of domain concepts.
 
 ---
 
@@ -120,18 +124,19 @@ src/
 3. On connection, creates `BaileysMessenger` + `DIContainer`
 4. Passes `DIContainer` to handlers, scheduler, and Express server
 
-`DIContainer` (src/di-container.ts) instantiates all adapters and exposes a getter per use case. No business logic lives in the container.
+`DIContainer` (src/di-container.ts) instantiates all adapters and exposes a
+getter per use case. No business logic lives in the container.
 
 ---
 
 ## Ports
 
-| Port | Purpose | Adapter(s) |
-|------|---------|------------|
-| `IRepositoryPort` | Persistence (users, topics, progress, problems) | `SqliteRepositoryAdapter` |
-| `IMessenger` | Outbound messaging (text, buttons, lists) | `BaileysMessenger`, `OpenClawMessenger` |
-| `IContentGeneratorPort` | AI-generated theory, solutions, revision summaries | `OllamaContentGeneratorAdapter` |
-| `IProblemProviderPort` | Fetch & sync LeetCode problems | `LeetCodeProblemProviderAdapter` |
+| Port                    | Purpose                                            | Adapter(s)                              |
+| ----------------------- | -------------------------------------------------- | --------------------------------------- |
+| `IRepositoryPort`       | Persistence (users, topics, progress, problems)    | `SqliteRepositoryAdapter`               |
+| `IMessenger`            | Outbound messaging (text, buttons, lists)          | `BaileysMessenger`, `OpenClawMessenger` |
+| `IContentGeneratorPort` | AI-generated theory, solutions, revision summaries | `OllamaContentGeneratorAdapter`         |
+| `IProblemProviderPort`  | Fetch & sync LeetCode problems                     | `LeetCodeProblemProviderAdapter`        |
 
 ---
 
@@ -161,7 +166,11 @@ export class SomeUseCase {
 
 ## Key Design Decisions
 
-- **Anemic entities** — entities are interfaces (contracts), not rich classes. Domain logic lives in `CurriculumDomainService` and value objects.
-- **No DI framework** — `DIContainer` is a hand-rolled composition root. Sufficient for a single-user MVP.
-- **Scheduler as delivery** — cron jobs are treated as a driving adapter (like HTTP or WebSocket), not as domain logic.
-- **AI is constrained** — `IContentGeneratorPort` is called by use cases with explicit topic/difficulty context. AI never decides curriculum order.
+- **Anemic entities** — entities are interfaces (contracts), not rich classes.
+  Domain logic lives in `CurriculumDomainService` and value objects.
+- **No DI framework** — `DIContainer` is a hand-rolled composition root.
+  Sufficient for a single-user MVP.
+- **Scheduler as delivery** — cron jobs are treated as a driving adapter (like
+  HTTP or WebSocket), not as domain logic.
+- **AI is constrained** — `IContentGeneratorPort` is called by use cases with
+  explicit topic/difficulty context. AI never decides curriculum order.

@@ -29,11 +29,18 @@ export class DIContainer {
   private readonly curriculum: CurriculumDomainService;
   private readonly _sendDailyProblem: SendDailyProblemUseCase;
 
-  constructor(db: Database.Database, private readonly messenger: IMessenger) {
+  constructor(
+    db: Database.Database,
+    private readonly messenger: IMessenger,
+  ) {
     this.repo = new SqliteRepositoryAdapter(db);
     this.contentGen = new OllamaContentGeneratorAdapter(new OllamaClient());
     this.curriculum = new CurriculumDomainService(this.repo);
-    this._sendDailyProblem = new SendDailyProblemUseCase(this.repo, this.messenger, this.curriculum);
+    this._sendDailyProblem = new SendDailyProblemUseCase(
+      this.repo,
+      this.messenger,
+      this.curriculum,
+    );
   }
 
   getRegisterUserUseCase(): RegisterUserUseCase {
@@ -55,11 +62,20 @@ export class DIContainer {
   }
 
   getSendSolutionUseCase(): SendSolutionUseCase {
-    return new SendSolutionUseCase(this.repo, this.messenger, this.contentGen, this.curriculum);
+    return new SendSolutionUseCase(
+      this.repo,
+      this.messenger,
+      this.contentGen,
+      this.curriculum,
+    );
   }
 
   getHandleDifficultyRatingUseCase(): HandleDifficultyRatingUseCase {
-    return new HandleDifficultyRatingUseCase(this.repo, this.messenger, this.curriculum);
+    return new HandleDifficultyRatingUseCase(
+      this.repo,
+      this.messenger,
+      this.curriculum,
+    );
   }
 
   getHandleReviewRatingUseCase(): HandleReviewRatingUseCase {
@@ -67,7 +83,11 @@ export class DIContainer {
   }
 
   getSendDueReviewsUseCase(): SendDueReviewsUseCase {
-    return new SendDueReviewsUseCase(this.repo, this.messenger, this.contentGen);
+    return new SendDueReviewsUseCase(
+      this.repo,
+      this.messenger,
+      this.contentGen,
+    );
   }
 
   getSendWeeklyTestUseCase(): SendWeeklyTestUseCase {
@@ -79,7 +99,11 @@ export class DIContainer {
   }
 
   getSendProgressReportUseCase(): SendProgressReportUseCase {
-    return new SendProgressReportUseCase(this.repo, this.messenger, this.curriculum);
+    return new SendProgressReportUseCase(
+      this.repo,
+      this.messenger,
+      this.curriculum,
+    );
   }
 
   getSendHelpUseCase(): SendHelpUseCase {

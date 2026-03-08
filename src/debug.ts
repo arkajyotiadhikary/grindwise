@@ -17,7 +17,10 @@ import { CurriculumDomainService } from '@grindwise/domain/services/curriculum.d
 import { OllamaClient } from '@grindwise/infrastructure/ollama-client';
 import { OllamaContentGeneratorAdapter } from '@grindwise/adapters/content-generator/ollama-content-generator.adapter';
 import { LeetCodeProblemProviderAdapter } from '@grindwise/adapters/problem-provider/leetcode-problem-provider.adapter';
-import { NEETCODE_ROADMAP, NEETCODE_PROBLEMS } from '@grindwise/data/neetcode-roadmap';
+import {
+  NEETCODE_ROADMAP,
+  NEETCODE_PROBLEMS,
+} from '@grindwise/data/neetcode-roadmap';
 import { startBot } from '@grindwise/bot/socket';
 import { BaileysMessenger } from '@grindwise/channels/baileys-messenger';
 
@@ -29,36 +32,44 @@ const contentGen = new OllamaContentGeneratorAdapter(ollama);
 
 /** Grab any topic from the DB for testing (falls back to roadmap data). */
 function getTestTopic() {
-  return repo.getTopicById('arrays-basics') ?? {
-    id: 'arrays-basics',
-    roadmap_id: 'neetcode',
-    name: 'Arrays: Fundamentals',
-    description: 'Understanding arrays, indexing, and basic operations',
-    category: 'Arrays & Hashing',
-    difficulty: 'Beginner' as const,
-    day_number: 1,
-    week_number: 1,
-    order_index: 1,
-    content: '',
-    key_concepts: JSON.stringify(['O(1) access', 'index-based', 'contiguous memory']),
-    time_complexity: 'O(n)',
-    space_complexity: 'O(1)',
-    created_at: new Date().toISOString(),
-  };
+  return (
+    repo.getTopicById('arrays-basics') ?? {
+      id: 'arrays-basics',
+      roadmap_id: 'neetcode',
+      name: 'Arrays: Fundamentals',
+      description: 'Understanding arrays, indexing, and basic operations',
+      category: 'Arrays & Hashing',
+      difficulty: 'Beginner' as const,
+      day_number: 1,
+      week_number: 1,
+      order_index: 1,
+      content: '',
+      key_concepts: JSON.stringify([
+        'O(1) access',
+        'index-based',
+        'contiguous memory',
+      ]),
+      time_complexity: 'O(n)',
+      space_complexity: 'O(1)',
+      created_at: new Date().toISOString(),
+    }
+  );
 }
 
 /** Grab any problem from the DB for testing (falls back to inline stub). */
 function getTestProblem() {
   const topic = getTestTopic();
-  return repo.getProblemForTopic(topic.id) ?? {
-    id: 'stub-two-sum',
-    topic_id: 'arrays-basics',
-    leetcode_id: undefined,
-    leetcode_slug: 'two-sum',
-    title: 'Two Sum',
-    description: 'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.',
-    difficulty: 'Easy' as const,
-    solution_code: `function twoSum(nums: number[], target: number): number[] {
+  return (
+    repo.getProblemForTopic(topic.id) ?? {
+      id: 'stub-two-sum',
+      topic_id: 'arrays-basics',
+      leetcode_id: undefined,
+      leetcode_slug: 'two-sum',
+      title: 'Two Sum',
+      description:
+        'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.',
+      difficulty: 'Easy' as const,
+      solution_code: `function twoSum(nums: number[], target: number): number[] {
   const map = new Map<number, number>();
   for (let i = 0; i < nums.length; i++) {
     const complement = target - nums[i];
@@ -67,12 +78,17 @@ function getTestProblem() {
   }
   return [];
 }`,
-    solution_explanation: 'Use a hash map to store each number and check for its complement in O(n).',
-    hints: JSON.stringify(['Think about what complement you need', 'Use a hash map for O(1) lookup']),
-    tags: JSON.stringify(['array', 'hash-table']),
-    url: 'https://leetcode.com/problems/two-sum/',
-    fetched_at: undefined,
-  };
+      solution_explanation:
+        'Use a hash map to store each number and check for its complement in O(n).',
+      hints: JSON.stringify([
+        'Think about what complement you need',
+        'Use a hash map for O(1) lookup',
+      ]),
+      tags: JSON.stringify(['array', 'hash-table']),
+      url: 'https://leetcode.com/problems/two-sum/',
+      fetched_at: undefined,
+    }
+  );
 }
 
 // ─── SECTION 1: Ollama connectivity ──────────────────────────────────────────
@@ -102,7 +118,10 @@ async function debugGenerateTheory(): Promise<void> {
   console.log('Topic:', topic.name);
 
   const content = await contentGen.generateTheory(topic);
-  if (!content) { console.log('⚠️  Returned null (Ollama unavailable or parse failed)'); return; }
+  if (!content) {
+    console.log('⚠️  Returned null (Ollama unavailable or parse failed)');
+    return;
+  }
 
   console.log('\nParsed TheoryContent:');
   console.log('  coreConcept:', content.coreConcept);
@@ -122,8 +141,14 @@ async function debugGenerateSolutionWalkthrough(): Promise<void> {
   const problem = getTestProblem();
   console.log('Problem:', problem.title);
 
-  const walkthrough = await contentGen.generateSolutionWalkthrough(problem, topic);
-  if (!walkthrough) { console.log('⚠️  Returned null (Ollama unavailable or parse failed)'); return; }
+  const walkthrough = await contentGen.generateSolutionWalkthrough(
+    problem,
+    topic,
+  );
+  if (!walkthrough) {
+    console.log('⚠️  Returned null (Ollama unavailable or parse failed)');
+    return;
+  }
 
   console.log('\nParsed SolutionWalkthrough:');
   console.log('  approach:', walkthrough.approach);
@@ -144,7 +169,10 @@ async function debugGenerateRevisionSummary(): Promise<void> {
   const reviewCount = 2;
 
   const summary = await contentGen.generateRevisionSummary(topic, reviewCount);
-  if (!summary) { console.log('⚠️  Returned null (Ollama unavailable or parse failed)'); return; }
+  if (!summary) {
+    console.log('⚠️  Returned null (Ollama unavailable or parse failed)');
+    return;
+  }
 
   console.log('\nParsed RevisionSummary:');
   console.log('  recap:', summary.recap);
@@ -168,7 +196,9 @@ function debugRepository(): void {
 
   const users = repo.getAllActiveUsers();
   console.log('Active users:', users.length);
-  users.forEach(u => console.log(' -', u.phone_number, `W${u.current_week}D${u.current_day}`));
+  users.forEach((u) =>
+    console.log(' -', u.phone_number, `W${u.current_week}D${u.current_day}`),
+  );
 }
 
 // ─── SECTION 7: CurriculumDomainService ──────────────────────────────────────
@@ -178,13 +208,18 @@ function debugCurriculumEngine(): void {
   const curriculum = new CurriculumDomainService(repo);
 
   const users = repo.getAllActiveUsers();
-  if (!users.length) { console.log('No active users in DB.'); return; }
+  if (!users.length) {
+    console.log('No active users in DB.');
+    return;
+  }
 
   const user = users[0];
   if (!user) return;
 
   const topic = curriculum.getCurrentTopic(user);
-  console.log(`User ${user.phone_number} → current topic: ${topic?.name ?? '(complete)'}`);
+  console.log(
+    `User ${user.phone_number} → current topic: ${topic?.name ?? '(complete)'}`,
+  );
 
   const progress = curriculum.getProgress(user);
   console.log('Progress:', progress);
@@ -195,8 +230,10 @@ function debugCurriculumEngine(): void {
 function debugRoadmapData(): void {
   console.log('--- NEETCODE_ROADMAP ---');
   console.log('Total topics defined:', NEETCODE_ROADMAP.length);
-  NEETCODE_ROADMAP.forEach(t =>
-    console.log(`  W${t.week_number}D${t.day_number} [${t.difficulty}] ${t.name}`),
+  NEETCODE_ROADMAP.forEach((t) =>
+    console.log(
+      `  W${t.week_number}D${t.day_number} [${t.difficulty}] ${t.name}`,
+    ),
   );
 
   console.log('\n--- NEETCODE_PROBLEMS ---');
@@ -208,19 +245,24 @@ function debugRoadmapData(): void {
 // ─── SECTION 9: Messenger — manual send ──────────────────────────────────────
 
 const DEBUG_TO = process.env.DEBUG_MESSENGER_TO ?? '';
-const DEBUG_MESSAGE = process.env.DEBUG_MESSENGER_MSG ?? '👋 Debug test from DSA Mentor bot';
+const DEBUG_MESSAGE =
+  process.env.DEBUG_MESSENGER_MSG ?? '👋 Debug test from DSA Mentor bot';
 
 async function debugMessengerSend(): Promise<void> {
   if (!DEBUG_TO) {
-    console.error('[debugMessenger] Set DEBUG_MESSENGER_TO=<phone_number> in .env and retry.');
+    console.error(
+      '[debugMessenger] Set DEBUG_MESSENGER_TO=<phone_number> in .env and retry.',
+    );
     return;
   }
 
   console.log(`--- Messenger debug: sending to ${DEBUG_TO} ---`);
 
   await startBot(
-    async () => { /* ignore incoming messages */ },
-    async sock => {
+    async () => {
+      /* ignore incoming messages */
+    },
+    async (sock) => {
       const messenger = new BaileysMessenger(sock);
 
       console.log('Sending text message...');
@@ -247,14 +289,20 @@ async function debugMessengerSend(): Promise<void> {
         'Select',
         [
           { id: 'easy', title: 'Easy', description: 'Warm-up problems' },
-          { id: 'medium', title: 'Medium', description: 'Core interview problems' },
+          {
+            id: 'medium',
+            title: 'Medium',
+            description: 'Core interview problems',
+          },
           { id: 'hard', title: 'Hard', description: 'Advanced challenges' },
         ],
       );
       console.log('sendList result:', listResult);
 
-      console.log('✅ All debug sends complete. Waiting 3s for socket to flush...');
-      await new Promise<void>(resolve => setTimeout(resolve, 3000));
+      console.log(
+        '✅ All debug sends complete. Waiting 3s for socket to flush...',
+      );
+      await new Promise<void>((resolve) => setTimeout(resolve, 3000));
       process.exit(0);
     },
   );
@@ -288,7 +336,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('Debug error:', err);
   repo.close();
   process.exit(1);

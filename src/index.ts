@@ -7,7 +7,6 @@ dotenv.config();
 
 const app = express();
 
-// ── Middleware ────────────────────────────────────────────────────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -18,7 +17,6 @@ app.use((req, _res, next) => {
   next();
 });
 
-// ── Routes ─────────────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
@@ -28,7 +26,6 @@ app.get('/health', (_req, res) => {
 });
 
 export function startExpressServer(di: DIContainer): void {
-  // Admin: trigger daily topic delivery manually
   app.post('/admin/send-daily', async (_req, res) => {
     try {
       const users = di.getRepository().getAllActiveUsers();
@@ -45,7 +42,6 @@ export function startExpressServer(di: DIContainer): void {
     }
   });
 
-  // Admin: register a user
   app.post('/admin/register', async (req, res) => {
     const { phone, name } = req.body as { phone?: string; name?: string };
     if (!phone) {

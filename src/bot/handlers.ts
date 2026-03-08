@@ -46,7 +46,8 @@ async function handleIncomingMessage(
     let user = repo.getUserByPhone(phone);
     if (!user) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const contactName: string | undefined = (msg as any)['pushName'] ?? undefined;
+      const contactName: string | undefined =
+        (msg as any)['pushName'] ?? undefined;
       await di.getRegisterUserUseCase().execute(phone, contactName);
       return;
     }
@@ -60,7 +61,10 @@ async function handleIncomingMessage(
     await routeUserCommand(user, msg, text?.toUpperCase().trim() ?? '', di);
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error('[handlers] handleIncomingMessage error', { error: errMsg, phone });
+    console.error('[handlers] handleIncomingMessage error', {
+      error: errMsg,
+      phone,
+    });
   }
 }
 
@@ -72,9 +76,11 @@ async function routeUserCommand(
 ): Promise<void> {
   if (msg.type === 'interactive') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const interactiveId: string = (msg as any)['interactive']?.button_reply?.id ??
-                                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                   (msg as any)['interactive']?.list_reply?.id ?? '';
+    const interactiveId: string =
+      (msg as any)['interactive']?.button_reply?.id ??
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (msg as any)['interactive']?.list_reply?.id ??
+      '';
     if (interactiveId.startsWith('test:')) {
       await di.getSubmitTestAnswerUseCase().execute(user, interactiveId);
       return;
@@ -94,12 +100,16 @@ async function routeUserCommand(
     case 'EASY':
     case 'MEDIUM':
     case 'HARD':
-      await di.getHandleDifficultyRatingUseCase().execute(user, command as 'EASY' | 'MEDIUM' | 'HARD');
+      await di
+        .getHandleDifficultyRatingUseCase()
+        .execute(user, command as 'EASY' | 'MEDIUM' | 'HARD');
       break;
     case 'RECALL':
     case 'FUZZY':
     case 'BLANK':
-      await di.getHandleReviewRatingUseCase().execute(user, command as 'RECALL' | 'FUZZY' | 'BLANK');
+      await di
+        .getHandleReviewRatingUseCase()
+        .execute(user, command as 'RECALL' | 'FUZZY' | 'BLANK');
       break;
     case 'REVIEW':
       await di.getSendDueReviewsUseCase().execute(user);
@@ -118,10 +128,12 @@ async function routeUserCommand(
       break;
     default:
       if (command.length > 0) {
-        await di.getMessenger().sendText(
-          user.phone_number,
-          `I didn't understand "*${command.slice(0, 50)}*".\n\nReply *HELP* for available commands.`,
-        );
+        await di
+          .getMessenger()
+          .sendText(
+            user.phone_number,
+            `I didn't understand "*${command.slice(0, 50)}*".\n\nReply *HELP* for available commands.`,
+          );
       }
   }
 }
@@ -133,8 +145,10 @@ function extractMessageText(msg: RawMessage): string | undefined {
     return m?.conversation ?? m?.extendedTextMessage?.text;
   }
   if (msg.type === 'interactive') {
-    return m?.buttonsResponseMessage?.selectedButtonId ??
-           m?.listResponseMessage?.singleSelectReply?.selectedRowId;
+    return (
+      m?.buttonsResponseMessage?.selectedButtonId ??
+      m?.listResponseMessage?.singleSelectReply?.selectedRowId
+    );
   }
   if (m?.extendedTextMessage?.text) {
     return m.extendedTextMessage.text as string;

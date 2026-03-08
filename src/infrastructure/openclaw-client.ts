@@ -1,6 +1,10 @@
 import axios, { AxiosInstance } from 'axios';
 import { config } from '../config';
-import { SendResult, ButtonOption, ListOption } from '../domain/ports/messaging.port';
+import {
+  SendResult,
+  ButtonOption,
+  ListOption,
+} from '../domain/ports/messaging.port';
 
 export class OpenClawClient {
   private readonly client: AxiosInstance;
@@ -11,7 +15,7 @@ export class OpenClawClient {
     this.client = axios.create({
       baseURL: config.openclawBaseUrl,
       headers: {
-        'Authorization': `Bearer ${config.openclawApiKey}`,
+        Authorization: `Bearer ${config.openclawApiKey}`,
         'Content-Type': 'application/json',
       },
       timeout: 10000,
@@ -28,7 +32,9 @@ export class OpenClawClient {
       });
 
       const data = response.data as Record<string, unknown>;
-      const messages = data['messages'] as Array<Record<string, unknown>> | undefined;
+      const messages = data['messages'] as
+        | Array<Record<string, unknown>>
+        | undefined;
       return { success: true, messageId: String(messages?.[0]?.['id'] ?? '') };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
@@ -48,7 +54,7 @@ export class OpenClawClient {
         type: 'button',
         body: { text: body },
         action: {
-          buttons: buttons.map(b => ({
+          buttons: buttons.map((b) => ({
             type: 'reply',
             reply: { id: b.id, title: b.title.slice(0, 20) },
           })),
@@ -67,7 +73,9 @@ export class OpenClawClient {
       });
 
       const data = response.data as Record<string, unknown>;
-      const messages = data['messages'] as Array<Record<string, unknown>> | undefined;
+      const messages = data['messages'] as
+        | Array<Record<string, unknown>>
+        | undefined;
       return { success: true, messageId: String(messages?.[0]?.['id'] ?? '') };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
@@ -92,20 +100,24 @@ export class OpenClawClient {
           body: { text: body },
           action: {
             button: buttonText,
-            sections: [{
-              title: 'Options',
-              rows: options.map(o => ({
-                id: o.id,
-                title: o.title.slice(0, 24),
-                description: o.description?.slice(0, 72) ?? undefined,
-              })),
-            }],
+            sections: [
+              {
+                title: 'Options',
+                rows: options.map((o) => ({
+                  id: o.id,
+                  title: o.title.slice(0, 24),
+                  description: o.description?.slice(0, 72) ?? undefined,
+                })),
+              },
+            ],
           },
         },
       });
 
       const data = response.data as Record<string, unknown>;
-      const messages = data['messages'] as Array<Record<string, unknown>> | undefined;
+      const messages = data['messages'] as
+        | Array<Record<string, unknown>>
+        | undefined;
       return { success: true, messageId: String(messages?.[0]?.['id'] ?? '') };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);

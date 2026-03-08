@@ -27,7 +27,10 @@ export class SubmitTestAnswerUseCase {
       if (!test || test.id !== testId) return;
 
       const questions = JSON.parse(test.questions) as TestQuestion[];
-      const answeredSoFar = JSON.parse(test.answers ?? '{}') as Record<string, string>;
+      const answeredSoFar = JSON.parse(test.answers ?? '{}') as Record<
+        string,
+        string
+      >;
       answeredSoFar[questionId] = answer;
 
       const nextQuestion = questions.find((q) => !answeredSoFar[q.id]);
@@ -53,15 +56,25 @@ export class SubmitTestAnswerUseCase {
           );
         }
       } else {
-        const score = this.repo.submitTestAnswer(testId, user.id, answeredSoFar);
+        const score = this.repo.submitTestAnswer(
+          testId,
+          user.id,
+          answeredSoFar,
+        );
         const percentage = (score / questions.length) * 100;
 
-        const results = MessageFormatter.testResults(score, questions.length, percentage);
+        const results = MessageFormatter.testResults(
+          score,
+          questions.length,
+          percentage,
+        );
         await this.messenger.sendText(user.phone_number, results);
 
         const weakTopics = questions
           .filter(
-            (q) => (answeredSoFar[q.id] ?? '').toLowerCase() !== q.correct_answer.toLowerCase(),
+            (q) =>
+              (answeredSoFar[q.id] ?? '').toLowerCase() !==
+              q.correct_answer.toLowerCase(),
           )
           .map((q) => q.topic_id);
 
@@ -71,7 +84,10 @@ export class SubmitTestAnswerUseCase {
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('[SubmitTestAnswer] execute failed', { error: message, phone: user.phone_number });
+      console.error('[SubmitTestAnswer] execute failed', {
+        error: message,
+        phone: user.phone_number,
+      });
       throw err;
     }
   }

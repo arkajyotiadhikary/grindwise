@@ -7,22 +7,18 @@ export interface OllamaGenerateOptions {
   maxTokens?: number;
 }
 
-/**
- * Low-level client for the Ollama local LLM API using the official ollama-js library.
- * Used exclusively by ContentGeneratorService — no business logic here.
- */
 export class OllamaClient {
   private readonly ollama: Ollama;
 
-  private readonly OLLAMA_MODEL:string;
-  private readonly OLLAMA_BASE_URL:string;
+  private readonly OLLAMA_MODEL: string;
+  private readonly OLLAMA_BASE_URL: string;
 
   constructor() {
-    if(!process.env.OLLAMA_BASE_URL) {
+    if (!process.env.OLLAMA_BASE_URL) {
       throw new Error('OLLAMA_BASE_URL environment variable is not set');
     }
 
-    if(!process.env.OLLAMA_MODEL) {
+    if (!process.env.OLLAMA_MODEL) {
       throw new Error('OLLAMA_MODEL environment variable is not set');
     }
 
@@ -31,11 +27,10 @@ export class OllamaClient {
     this.ollama = new Ollama({ host: this.OLLAMA_BASE_URL });
   }
 
-  /**
-   * Generate text from a prompt using the Ollama generate API.
-   * Throws on error — callers should catch.
-   */
-  async generate(prompt: string, options?: OllamaGenerateOptions): Promise<string> {
+  async generate(
+    prompt: string,
+    options?: OllamaGenerateOptions,
+  ): Promise<string> {
     const response = await this.ollama.generate({
       model: options?.model ?? this.OLLAMA_MODEL,
       prompt,
@@ -48,9 +43,6 @@ export class OllamaClient {
     return response.response.trim();
   }
 
-  /**
-   * Returns true if the Ollama server is reachable, false otherwise.
-   */
   async isAvailable(): Promise<boolean> {
     try {
       await this.ollama.list();

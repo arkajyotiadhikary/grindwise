@@ -4,7 +4,11 @@ import { User } from '../domain/entities/user.entity';
 import { TestQuestion } from '../domain/entities/progress.entity';
 
 export class MessageFormatter {
-  static dailyTopic(topic: Topic, dayNumber: number, weekNumber: number): string {
+  static dailyTopic(
+    topic: Topic,
+    dayNumber: number,
+    weekNumber: number,
+  ): string {
     const concepts = JSON.parse(topic.key_concepts ?? '[]') as string[];
     return [
       `📚 *Day ${dayNumber}, Week ${weekNumber}: ${topic.name}*`,
@@ -21,7 +25,7 @@ export class MessageFormatter {
       `⏱ *Time:* ${topic.time_complexity}`,
       `💾 *Space:* ${topic.space_complexity}`,
       '',
-      '_Reply *PROBLEM* to get today\'s practice problem, or *HELP* for commands._',
+      "_Reply *PROBLEM* to get today's practice problem, or *HELP* for commands._",
     ].join('\n');
   }
 
@@ -71,24 +75,34 @@ export class MessageFormatter {
       `💾 *Space:* ${topic.space_complexity}`,
       '',
       '🔑 *Key Concepts:*',
-      (JSON.parse(topic.key_concepts ?? '[]') as string[]).map((c) => `  • ${c}`).join('\n'),
+      (JSON.parse(topic.key_concepts ?? '[]') as string[])
+        .map((c) => `  • ${c}`)
+        .join('\n'),
       '',
-      '_Reply *RECALL* (easy recall), *FUZZY* (partially recalled), or *BLANK* (couldn\'t recall)_',
+      "_Reply *RECALL* (easy recall), *FUZZY* (partially recalled), or *BLANK* (couldn't recall)_",
     ].join('\n');
   }
 
-  static testQuestion(question: TestQuestion, questionNum: number, total: number): string {
-    return [`📝 *Weekly Test — Q${questionNum}/${total}*`, '', question.question].join('\n');
+  static testQuestion(
+    question: TestQuestion,
+    questionNum: number,
+    total: number,
+  ): string {
+    return [
+      `📝 *Weekly Test — Q${questionNum}/${total}*`,
+      '',
+      question.question,
+    ].join('\n');
   }
 
   static testResults(score: number, total: number, percentage: number): string {
     const emoji = percentage >= 80 ? '🏆' : percentage >= 60 ? '✅' : '📖';
     const message =
       percentage >= 80
-        ? 'Excellent work! You\'ve mastered this week\'s material.'
+        ? "Excellent work! You've mastered this week's material."
         : percentage >= 60
           ? 'Good effort! Review the topics you missed before moving on.'
-          : 'This week\'s content needs more practice. Don\'t give up!';
+          : "This week's content needs more practice. Don't give up!";
 
     return [
       `${emoji} *Weekly Test Complete!*`,
@@ -106,7 +120,7 @@ export class MessageFormatter {
     return [
       `👋 *Welcome to DSA Learning Bot, ${userName}!*`,
       '',
-      '🗺 You\'ve been enrolled in the *NeetCode DSA Roadmap* — a structured path to master Data Structures & Algorithms.',
+      "🗺 You've been enrolled in the *NeetCode DSA Roadmap* — a structured path to master Data Structures & Algorithms.",
       '',
       '📅 *What to expect:*',
       '  • Daily topic + concept explanation',
@@ -117,17 +131,27 @@ export class MessageFormatter {
       '🕘 *Messages arrive at 9:00 AM daily.*',
       '',
       '📌 *Commands:*',
-      '  PROBLEM — Get today\'s practice problem',
+      "  PROBLEM — Get today's practice problem",
       '  SOLUTION — Reveal the solution',
       '  PROGRESS — View your stats',
       '  REVIEW — Get a topic to review',
       '  HELP — Show all commands',
       '',
-      '_Let\'s start your DSA journey! Your first topic arrives tomorrow morning. 🚀_',
+      "_Let's start your DSA journey! Your first topic arrives tomorrow morning. 🚀_",
     ].join('\n');
   }
 
-  static progressReport(user: User, summary: { understood?: number; sent?: number; completedTopics?: number; totalTopics?: number; total?: number; percentageComplete?: number }): string {
+  static progressReport(
+    user: User,
+    summary: {
+      understood?: number;
+      sent?: number;
+      completedTopics?: number;
+      totalTopics?: number;
+      total?: number;
+      percentageComplete?: number;
+    },
+  ): string {
     return [
       `📊 *Your Progress Report*`,
       '',
@@ -148,8 +172,8 @@ export class MessageFormatter {
       `🤖 *DSA Learning Bot — Commands*`,
       '',
       '📖 *Content:*',
-      '  TOPIC — Today\'s topic',
-      '  PROBLEM — Today\'s problem',
+      "  TOPIC — Today's topic",
+      "  PROBLEM — Today's problem",
       '  SOLUTION — Reveal solution',
       '',
       '📊 *Tracking:*',
@@ -163,7 +187,7 @@ export class MessageFormatter {
       '  RECALL / FUZZY / BLANK — For review sessions',
       '',
       '📝 *Tests:*',
-      '  TEST — Start today\'s test (weekend only)',
+      "  TEST — Start today's test (weekend only)",
       '',
       '_Questions? Our system tracks your progress automatically!_',
     ].join('\n');

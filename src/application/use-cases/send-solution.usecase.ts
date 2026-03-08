@@ -22,12 +22,15 @@ export class SendSolutionUseCase {
       if (!problem) {
         await this.messenger.sendText(
           user.phone_number,
-          '⚠️ No solution stored yet for today\'s topic. Check the LeetCode editorial!',
+          "⚠️ No solution stored yet for today's topic. Check the LeetCode editorial!",
         );
         return;
       }
 
-      const walkthrough = await this.contentGen.generateSolutionWalkthrough(problem, topic);
+      const walkthrough = await this.contentGen.generateSolutionWalkthrough(
+        problem,
+        topic,
+      );
       const solutionMsg = walkthrough
         ? this.contentGen.formatSolutionMessage(problem, walkthrough)
         : MessageFormatter.solution(problem);
@@ -35,7 +38,10 @@ export class SendSolutionUseCase {
       this.repo.logMessage(user.id, 'outbound', 'solution', solutionMsg);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('[SendSolution] execute failed', { error: message, phone: user.phone_number });
+      console.error('[SendSolution] execute failed', {
+        error: message,
+        phone: user.phone_number,
+      });
       throw err;
     }
   }

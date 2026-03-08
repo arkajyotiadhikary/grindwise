@@ -8,7 +8,7 @@ export interface Problem {
   difficulty: string;
   solution_code?: string;
   solution_explanation?: string;
-  hints?: string; // JSON
-  tags?: string; // JSON
+  hints?: string;
+  tags?: string;
   url?: string;
 }

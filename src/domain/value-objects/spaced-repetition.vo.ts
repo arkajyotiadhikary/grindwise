@@ -17,7 +17,10 @@ export interface NextInterval {
 }
 
 export const SpacedRepetitionVO = {
-  computeNextInterval(quality: number, state?: SpacedRepetitionState): NextInterval {
+  computeNextInterval(
+    quality: number,
+    state?: SpacedRepetitionState,
+  ): NextInterval {
     let interval: number;
     let easeFactor: number;
     let repetitionCount: number;
@@ -48,6 +51,11 @@ export const SpacedRepetitionVO = {
     nextReview.setDate(nextReview.getDate() + interval);
     const nextReviewDate = nextReview.toISOString().split('T')[0] as string;
 
-    return { intervalDays: interval, easeFactor, repetitionCount, nextReviewDate };
+    return {
+      intervalDays: interval,
+      easeFactor,
+      repetitionCount,
+      nextReviewDate,
+    };
   },
 };

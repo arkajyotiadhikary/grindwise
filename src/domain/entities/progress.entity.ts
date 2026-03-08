@@ -26,7 +26,7 @@ export interface TestQuestion {
   topic_id: string;
   question: string;
   type: string;
-  options?: string; // JSON
+  options?: string;
   correct_answer: string;
   explanation?: string;
   difficulty: string;
@@ -36,8 +36,8 @@ export interface WeeklyTest {
   id: string;
   user_id: string;
   week_number: number;
-  questions: string; // JSON
-  answers?: string; // JSON
+  questions: string;
+  answers?: string;
   score?: number;
   max_score?: number;
   percentage?: number;
