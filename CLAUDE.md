@@ -202,3 +202,120 @@ implementation.
 -   Ensure channel abstraction is maintained
 -   Ensure no random content generation is introduced
 -   Ensure TypeScript strict typing is followed
+
+------------------------------------------------------------------------
+
+## Coding Standards
+
+### Async Style
+- Use `async/await` exclusively. Raw `.then()/.catch()` chains are forbidden.
+
+### Typing
+- No `any` type unless explicitly justified with a comment (exception: untyped third-party modules).
+- Enable strict mode: `strict: true`, `noImplicitAny: true`, `strictNullChecks: true`, `strictFunctionTypes: true`, `strictPropertyInitialization: true`, `noImplicitReturns: true`, `noUncheckedIndexedAccess: true`.
+- Target: ES2020, module: commonjs, moduleResolution: node.
+
+### Naming
+- Variables: descriptive
+- Functions: verbNoun format (e.g., `fetchTopics`, `buildReply`)
+- Classes: PascalCase
+- Constants: UPPER_SNAKE_CASE
+- Files: kebab-case
+
+### Exports
+- Services use named exports only. Default exports allowed only in entry points (`index.ts`, `main.ts`).
+
+### Types vs Interfaces
+- Prefer `interface` for object shapes; `type` for unions/aliases.
+- Generic type parameters must have constraints where applicable.
+- Prefer `const enum`.
+
+### Null Handling
+- Never assume a value is non-null. Always check explicitly before accessing.
+
+### Return Types
+- All exported functions must have explicit return types.
+
+### Architecture
+- Each module has a single responsibility. No coupling of unrelated concerns in one file.
+
+### Import Order
+1. Node builtins
+2. External packages
+3. Internal modules
+4. Relative imports
+
+### Comments
+- Add comments for complex logic only. Commented-out code is prohibited.
+
+### Error Handling
+- Every async function body must be wrapped in `try/catch`.
+- Empty catch blocks are forbidden — every caught error must be logged or re-thrown.
+- Error logs must include: error message, function/module name, relevant sanitized input context.
+  - Format: `logger.error('[ModuleName] description', { error, context })`
+- Either handle the error at the catch site or re-throw with additional context.
+- Define domain-specific Error classes (e.g., `AuthError`, `ConnectionError`) for predictable categorization.
+- Register a process-level `unhandledRejection` handler. All promise rejections must be handled.
+
+------------------------------------------------------------------------
+
+## WhatsApp (Baileys) Integration Rules
+
+### Package
+- Use `@whiskeysockets/baileys` with named imports only.
+
+### Architecture — 4 Layers (top → bottom, dependency flows downward only)
+1. **Transport** — socket lifecycle, connection events, raw message I/O (`src/bot/socket.ts`)
+2. **Handlers** — business logic triggered by events (`src/bot/handlers.ts`)
+3. **Services** — domain operations (`src/services/`)
+4. **Config** — environment variables (`src/config/index.ts`)
+
+Transport must not call service/handler logic directly; use event emitters or callbacks.
+
+### Initialization
+- All socket setup must occur inside `async function startBot(): Promise<void>`.
+- `startBot()` is the only caller of `makeWASocket()` and must be invoked from the main entry point only.
+- No module-level mutable variables holding socket or auth state.
+
+### Auth Persistence
+- Always use `useMultiFileAuthState`. Storage path must be configurable via environment variable.
+- Register `sock.ev.on('creds.update', saveCreds)` immediately after socket init. Missing this causes session loss on restart.
+- On startup, verify auth state exists; log a clear message if no prior session found (first-time QR scan).
+- Print QR code to terminal using `qrcode-terminal` on first run.
+
+### Reconnection
+- Reconnect automatically on non-401 disconnect codes.
+- Never reconnect on `DisconnectReason.loggedOut` (401).
+- Use exponential backoff: initial 3s, multiplier 2×, max 60s, max 10 retries.
+
+### Required Event Subscriptions
+- `connection.update` — monitor socket state (open, close, QR)
+- `messages.upsert` — receive incoming messages
+- `creds.update` — persist updated credentials
+
+### Message Validation (on `messages.upsert`)
+```ts
+const msg = messages[0];
+if (!msg || !msg.message || msg.key.fromMe) return;
+const remoteJid = msg.key.remoteJid;
+if (!remoteJid) return;
+```
+
+### Event Handler Isolation
+- Each subscription must delegate to a named handler function. Inline arrow functions must not exceed 3 lines.
+
+### Outbound Messaging
+- Always use `sock.sendMessage()`. Never call it with business logic inline.
+  - Wrong: `await sock.sendMessage(jid, { text: await generateAIResponse(msg) })`
+  - Correct: `const response = await messageService.buildReply(msg); await messenger.send(jid, response);`
+- Validate `remoteJid` is a non-empty string ending with `@s.whatsapp.net` or group suffix before sending.
+- Sanitize outgoing text: strip control characters, trim whitespace, enforce 4096-char max.
+- Supported message types: text, image (with caption), document. No bulk/broadcast/template.
+
+### Safety (Critical)
+- **Prohibited**: bulk messaging, auto-DM to unknown contacts, contact scraping, spam automation, fake presence/typing indicators.
+- Rate limit: ~1 message/second per recipient in automated flows.
+- Tight reconnect loops (no delay) are forbidden — risk account bans.
+- Do not log full message content at INFO or higher in production (treat as PII; debug level only).
+- Add `auth_state/` to `.gitignore`.
+- Any automated message must be in response to an explicit user-initiated action or opt-in subscription.
