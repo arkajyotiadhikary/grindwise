@@ -32,10 +32,13 @@ function buildNumberedMenu(
   return `${body}\n\n${items}`;
 }
 
+const TYPING_REFRESH_MS = 4000;
+
 export class BaileysMessenger implements IMessenger {
   private readonly sock: WASocket;
   private lastSent = 0;
   private readonly sentMessageIds = new Set<string>();
+  private readonly typingTimers = new Map<string, ReturnType<typeof setInterval>>();
 
   constructor(sock: WASocket) {
     this.sock = sock;
@@ -49,6 +52,7 @@ export class BaileysMessenger implements IMessenger {
     try {
       await this.rateLimit();
       const jid = this.resolveJid(to);
+      this.stopTypingFor(jid);
       const safe = sanitizeText(text);
       const sent = await this.sock.sendMessage(jid, { text: safe });
       const messageId = sent?.key?.id as string | undefined;
@@ -87,13 +91,38 @@ export class BaileysMessenger implements IMessenger {
   async markRead(_messageId: string): Promise<void> {}
 
   async showTyping(to: string): Promise<void> {
+    const jid = this.resolveJid(to);
+    this.stopTypingFor(jid);
+
     try {
-      const jid = this.resolveJid(to);
       await this.sock.sendPresenceUpdate('composing', jid);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
       console.error('[BaileysMessenger] showTyping failed', { error: msg, to });
+      return;
     }
+
+    const timer = setInterval(() => {
+      this.sock.sendPresenceUpdate('composing', jid).catch(() => {
+        this.stopTypingFor(jid);
+      });
+    }, TYPING_REFRESH_MS);
+
+    this.typingTimers.set(jid, timer);
+  }
+
+  async stopTyping(to: string): Promise<void> {
+    const jid = this.resolveJid(to);
+    this.stopTypingFor(jid);
+  }
+
+  private stopTypingFor(jid: string): void {
+    const existing = this.typingTimers.get(jid);
+    if (existing) {
+      clearInterval(existing);
+      this.typingTimers.delete(jid);
+    }
+    this.sock.sendPresenceUpdate('paused', jid).catch(() => {});
   }
 
   private resolveJid(to: string): string {

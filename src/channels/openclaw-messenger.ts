@@ -41,6 +41,8 @@ export class OpenClawMessenger implements IMessenger {
 
   async showTyping(_to: string): Promise<void> {}
 
+  async stopTyping(_to: string): Promise<void> {}
+
   isBotMessage(_messageId: string): boolean {
     return false;
   }
