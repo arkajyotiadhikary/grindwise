@@ -27,6 +27,7 @@ export class SendSolutionUseCase {
         return;
       }
 
+      await this.messenger.showTyping(user.phone_number);
       const walkthrough = await this.contentGen.generateSolutionWalkthrough(
         problem,
         topic,

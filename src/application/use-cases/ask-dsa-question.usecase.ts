@@ -15,6 +15,7 @@ export class AskDsaQuestionUseCase {
 
   async execute(user: User, question: string): Promise<void> {
     try {
+      await this.messenger.showTyping(user.phone_number);
       const result = await this.contentGen.askDsaQuestion(question);
 
       if (!result || !result.isDsaRelated) {

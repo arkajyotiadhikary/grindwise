@@ -29,6 +29,7 @@ export class SendDailyTopicUseCase {
         return;
       }
 
+      await this.messenger.showTyping(user.phone_number);
       const theoryContent = await this.contentGen.generateTheory(topic);
       const topicMsg = theoryContent
         ? this.contentGen.formatTheoryMessage(
