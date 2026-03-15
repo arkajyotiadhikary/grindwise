@@ -40,6 +40,27 @@ export function createMessageHandler(di: DIContainer): OnMessageCallback {
   };
 }
 
+function stripDeviceSuffix(jid: string): string {
+  return jid.replace(/:.*@/, '@');
+}
+
+function isSelfChat(remoteJid: string, sock: WASocket): boolean {
+  // LID-based: compare remoteJid against bot's own LID
+  if (remoteJid.endsWith('@lid')) {
+    const botLid: string | undefined = sock.user?.lid;
+    if (botLid) {
+      return stripDeviceSuffix(remoteJid) === stripDeviceSuffix(botLid);
+    }
+    return false;
+  }
+  // PN-based: compare remoteJid against bot's own phone JID
+  const botJid: string | undefined = sock.user?.id;
+  if (botJid) {
+    return stripDeviceSuffix(remoteJid) === stripDeviceSuffix(botJid);
+  }
+  return false;
+}
+
 function resolvePhone(
   remoteJid: string,
   msg: RawMessage,
@@ -79,6 +100,7 @@ async function handleIncomingMessage(
 
   // Only process messages from self-chat (our own number)
   if (!msg.key?.fromMe) return;
+  if (!isSelfChat(remoteJid, sock)) return;
 
   const phone = resolvePhone(remoteJid, msg, sock);
 

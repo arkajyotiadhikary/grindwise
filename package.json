@@ -7,7 +7,7 @@
     "build": "tsc",
     "start": "node dist/main.js",
     "debug": "ts-node -r tsconfig-paths/register src/debug.ts",
-    "dev": "ts-node -r tsconfig-paths/register src/main.ts",
+    "dev": "tsx --watch -r tsconfig-paths/register src/main.ts",
     "db:init": "ts-node -r tsconfig-paths/register src/db/init.ts",
     "scheduler": "ts-node -r tsconfig-paths/register src/services/scheduler.ts"
   },
@@ -31,6 +31,7 @@
     "prettier": "3.8.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.3"
   }
 }
