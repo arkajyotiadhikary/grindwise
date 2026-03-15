@@ -31,6 +31,30 @@ export class SendDailyProblemUseCase {
       const problemMsg = MessageFormatter.dailyProblem(problem, topic);
       await this.messenger.sendText(user.phone_number, problemMsg);
       this.repo.logMessage(user.id, 'outbound', 'problem', problemMsg);
+
+      const session = this.repo.getOrCreatePracticeSession(user.id, topic.id, problem.id);
+
+      if (session.phase === 'completed') {
+        await this.messenger.sendText(
+          user.phone_number,
+          '_You already completed this problem! Reply */topic* after advancing to get a new one._',
+        );
+      } else if (session.awaiting_confirmation) {
+        await this.messenger.sendText(
+          user.phone_number,
+          `_You have a pending ${session.phase} evaluation. Reply *YES* to continue or *NO* to retry._`,
+        );
+      } else {
+        const phasePrompts: Record<string, string> = {
+          explanation: '_Start by explaining your approach. Reply */explanation <your approach>*_',
+          pseudo: '_Write your pseudocode. Reply */pseudo <your pseudocode>*_',
+          code: '_Write your code solution. Reply */code <your code>*_',
+        };
+        await this.messenger.sendText(
+          user.phone_number,
+          phasePrompts[session.phase] ?? phasePrompts['explanation']!,
+        );
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('[SendDailyProblem] execute failed', {

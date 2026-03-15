@@ -67,14 +67,18 @@ async function handleIncomingMessage(
   di: DIContainer,
 ): Promise<void> {
   if (!msg || !msg.message) return;
-
+  
   const messageId = msg.key?.id;
   if (!messageId) return;
+
   if (di.getMessenger().isBotMessage(messageId)) return;
   if (!markProcessed(messageId)) return;
 
   const remoteJid = msg.key?.remoteJid;
   if (!remoteJid || typeof remoteJid !== 'string') return;
+
+  // Only process messages from self-chat (our own number)
+  if (!msg.key?.fromMe) return;
 
   const phone = resolvePhone(remoteJid, msg, sock);
 
@@ -94,23 +98,54 @@ async function handleIncomingMessage(
     if (text) {
       repo.logMessage(user.id, 'inbound', msg.type ?? 'text', text);
     }
-
+    
     user = repo.getUserByPhone(phone) ?? user;
     const trimmedText = text?.trim() ?? '';
     const normalized = trimmedText.toUpperCase().replace(/^\//, '');
 
-    await di.getMessenger().showTyping(phone);
-
-    const askMatch = /^\/?\s*ASK\s+/i.exec(trimmedText);
-    if (askMatch) {
-      const question = trimmedText.slice(askMatch[0].length).trim();
-      if (question.length > 0) {
-        await di.getAskDsaQuestionUseCase().execute(user, question);
-        return;
+    const messenger = di.getMessenger();
+    await messenger.showTyping(phone);
+    try {
+      const askMatch = /^\/?\s*ASK\s+/i.exec(trimmedText);
+      if (askMatch) {
+        const question = trimmedText.slice(askMatch[0].length).trim();
+        if (question.length > 0) {
+          await di.getAskDsaQuestionUseCase().execute(user, question);
+          return;
+        }
       }
-    }
 
-    await routeUserCommand(user, msg, normalized, di);
+      const explanationMatch = /^\/?\s*EXPLANATION\s+/i.exec(trimmedText);
+      if (explanationMatch) {
+        const content = trimmedText.slice(explanationMatch[0].length).trim();
+        if (content.length > 0) {
+          await di.getSubmitPracticePhaseUseCase().execute(user, 'explanation', content);
+          return;
+        }
+      }
+
+      const pseudoMatch = /^\/?\s*PSEUDO\s+/i.exec(trimmedText);
+      if (pseudoMatch) {
+        const content = trimmedText.slice(pseudoMatch[0].length).trim();
+        if (content.length > 0) {
+          await di.getSubmitPracticePhaseUseCase().execute(user, 'pseudo', content);
+          return;
+        }
+      }
+
+      const codeMatch = /^\/?\s*CODE\s+/i.exec(trimmedText);
+      if (codeMatch) {
+        const content = trimmedText.slice(codeMatch[0].length).trim();
+        if (content.length > 0) {
+          await di.getSubmitPracticePhaseUseCase().execute(user, 'code', content);
+          return;
+        }
+      }
+
+      await routeUserCommand(user, msg, normalized, di);
+    } finally {
+      await messenger.stopTyping(phone);
+    }
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error('[handlers] handleIncomingMessage error', {
@@ -149,13 +184,39 @@ async function routeUserCommand(
     case 'SOLUTION':
       await di.getSendSolutionUseCase().execute(user);
       break;
+    case 'YES':
+    case 'NO': {
+      const handled = await di
+        .getHandlePracticeConfirmationUseCase()
+        .execute(user, command === 'YES');
+      if (!handled) {
+        await di
+          .getMessenger()
+          .sendText(
+            user.phone_number,
+            `I didn't understand "*${command}*" in this context.\n\nReply */help* for available commands.`,
+          );
+      }
+      break;
+    }
     case 'EASY':
     case 'MEDIUM':
-    case 'HARD':
+    case 'HARD': {
+      const activeSession = di.getRepository().getActivePracticeSession(user.id);
+      if (activeSession) {
+        await di
+          .getMessenger()
+          .sendText(
+            user.phone_number,
+            `You have an active practice session (phase: *${activeSession.phase}*). Complete it first before rating.\n\nReply */${activeSession.phase}* with your answer.`,
+          );
+        break;
+      }
       await di
         .getHandleDifficultyRatingUseCase()
         .execute(user, command as 'EASY' | 'MEDIUM' | 'HARD');
       break;
+    }
     case 'RECALL':
     case 'FUZZY':
     case 'BLANK':

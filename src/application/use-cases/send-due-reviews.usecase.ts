@@ -36,14 +36,34 @@ export class SendDueReviewsUseCase {
       );
       const daysAgo = Math.max(daysDiff, reviewItem.interval_days);
 
-      const revisionSummary = await this.contentGen.generateRevisionSummary(
-        topic,
-        reviewItem.repetition_count,
+      const previousSession = this.repo.getPracticeSessionForTopic(
+        user.id,
+        topic.id,
       );
-      const reviewMsg = revisionSummary
-        ? this.contentGen.formatRevisionMessage(topic, revisionSummary, daysAgo)
-        : MessageFormatter.reviewReminder(topic, daysAgo);
-      await this.messenger.sendText(user.phone_number, reviewMsg);
+      const previousQuality = previousSession?.combined_quality;
+
+      let loggedMsg: string;
+
+      if (previousQuality !== undefined && previousQuality !== null && previousQuality >= 4) {
+        const problem = this.repo.getProblemForTopic(topic.id);
+        if (problem) {
+          const problemMsg = MessageFormatter.dailyProblem(problem, topic);
+          loggedMsg = `🔄 *Review: ${topic.name}*\n_You scored ${previousQuality}/5 last time — just the problem this time!_\n\n${problemMsg}\n\n_Want a theory refresher? Reply */topic*_`;
+        } else {
+          loggedMsg = MessageFormatter.reviewReminder(topic, daysAgo);
+        }
+      } else {
+        await this.messenger.showTyping(user.phone_number);
+        const revisionSummary = await this.contentGen.generateRevisionSummary(
+          topic,
+          reviewItem.repetition_count,
+        );
+        loggedMsg = revisionSummary
+          ? this.contentGen.formatRevisionMessage(topic, revisionSummary, daysAgo)
+          : MessageFormatter.reviewReminder(topic, daysAgo);
+      }
+
+      await this.messenger.sendText(user.phone_number, loggedMsg);
 
       if (dueReviews.length > 1) {
         await this.messenger.sendText(
@@ -53,7 +73,7 @@ export class SendDueReviewsUseCase {
         );
       }
 
-      this.repo.logMessage(user.id, 'outbound', 'reminder', reviewMsg);
+      this.repo.logMessage(user.id, 'outbound', 'reminder', loggedMsg);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('[SendDueReviews] execute failed', {

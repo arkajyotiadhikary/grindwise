@@ -10,6 +10,10 @@ import {
   TestQuestion,
   WeeklyTest,
 } from '@grindwise/domain/entities/progress.entity';
+import {
+  PracticeSession,
+  PracticePhase,
+} from '@grindwise/domain/entities/practice-session.entity';
 import { SpacedRepetitionVO } from '@grindwise/domain/value-objects/spaced-repetition.vo';
 
 export class SqliteRepositoryAdapter implements IRepositoryPort {
@@ -369,6 +373,87 @@ export class SqliteRepositoryAdapter implements IRepositoryPort {
       .run(JSON.stringify(answers), score, percentage, testId);
 
     return score;
+  }
+
+  getActivePracticeSession(userId: string): PracticeSession | undefined {
+    return this.db
+      .prepare(
+        `SELECT * FROM practice_sessions WHERE user_id = ? AND phase != 'completed' ORDER BY started_at DESC LIMIT 1`,
+      )
+      .get(userId) as PracticeSession | undefined;
+  }
+
+  getOrCreatePracticeSession(
+    userId: string,
+    topicId: string,
+    problemId: string,
+  ): PracticeSession {
+    const existing = this.db
+      .prepare(
+        `SELECT * FROM practice_sessions WHERE user_id = ? AND topic_id = ? AND phase != 'completed'`,
+      )
+      .get(userId, topicId) as PracticeSession | undefined;
+
+    if (existing) return existing;
+
+    const id = uuidv4();
+    this.db
+      .prepare(
+        `INSERT INTO practice_sessions (id, user_id, topic_id, problem_id, phase, awaiting_confirmation)
+         VALUES (?, ?, ?, ?, 'explanation', 0)`,
+      )
+      .run(id, userId, topicId, problemId);
+    return this.db
+      .prepare('SELECT * FROM practice_sessions WHERE id = ?')
+      .get(id) as PracticeSession;
+  }
+
+  updatePracticePhase(
+    sessionId: string,
+    phase: PracticePhase,
+    awaitingConfirmation: number,
+  ): void {
+    this.db
+      .prepare(
+        `UPDATE practice_sessions SET phase = ?, awaiting_confirmation = ? WHERE id = ?`,
+      )
+      .run(phase, awaitingConfirmation, sessionId);
+  }
+
+  savePracticePhaseScore(
+    sessionId: string,
+    phase: 'explanation' | 'pseudo' | 'code',
+    text: string,
+    score: number,
+    feedback: string,
+  ): void {
+    this.db
+      .prepare(
+        `UPDATE practice_sessions
+         SET ${phase}_text = ?, ${phase}_score = ?, ${phase}_feedback = ?, awaiting_confirmation = 1
+         WHERE id = ?`,
+      )
+      .run(text, score, feedback, sessionId);
+  }
+
+  completePracticeSession(sessionId: string, combinedQuality: number): void {
+    this.db
+      .prepare(
+        `UPDATE practice_sessions SET phase = 'completed', combined_quality = ?, completed_at = CURRENT_TIMESTAMP, awaiting_confirmation = 0
+         WHERE id = ?`,
+      )
+      .run(combinedQuality, sessionId);
+  }
+
+  getPracticeSessionForTopic(
+    userId: string,
+    topicId: string,
+  ): PracticeSession | undefined {
+    return this.db
+      .prepare(
+        `SELECT * FROM practice_sessions WHERE user_id = ? AND topic_id = ? ORDER BY started_at DESC LIMIT 1`,
+      )
+      .get(userId, topicId) as PracticeSession | undefined;
   }
 
   logMessage(

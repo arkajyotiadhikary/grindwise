@@ -1,6 +1,18 @@
 import { Topic } from '../entities/topic.entity';
 import { Problem } from '../entities/problem.entity';
 
+export interface PhaseEvaluationResult {
+  score: number;
+  feedback: string;
+  isAcceptable: boolean;
+}
+
+export interface PriorPhaseContext {
+  phase: string;
+  score: number;
+  summary: string;
+}
+
 export interface TheoryContent {
   coreConcept: string;
   keyTakeaways: string[];
@@ -54,4 +66,22 @@ export interface IContentGeneratorPort {
     summary: RevisionSummary,
     daysAgo: number,
   ): string;
+  evaluateExplanation(
+    userExplanation: string,
+    problem: Problem,
+    topic: Topic,
+    priorPhases?: PriorPhaseContext[],
+  ): Promise<PhaseEvaluationResult | null>;
+  evaluatePseudoCode(
+    userPseudo: string,
+    problem: Problem,
+    topic: Topic,
+    priorPhases?: PriorPhaseContext[],
+  ): Promise<PhaseEvaluationResult | null>;
+  evaluateCode(
+    userCode: string,
+    problem: Problem,
+    topic: Topic,
+    priorPhases?: PriorPhaseContext[],
+  ): Promise<PhaseEvaluationResult | null>;
 }

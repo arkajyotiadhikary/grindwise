@@ -7,6 +7,10 @@ import {
   TestQuestion,
   WeeklyTest,
 } from '../entities/progress.entity';
+import {
+  PracticeSession,
+  PracticePhase,
+} from '../entities/practice-session.entity';
 
 export interface IRepositoryPort {
   // ── User ──────────────────────────────────────────────────────────────────
@@ -70,6 +74,34 @@ export interface IRepositoryPort {
     userId: string,
     answers: Record<string, string>,
   ): number;
+
+  // ── Practice Sessions ────────────────────────────────────────────────────
+  getActivePracticeSession(userId: string): PracticeSession | undefined;
+  getOrCreatePracticeSession(
+    userId: string,
+    topicId: string,
+    problemId: string,
+  ): PracticeSession;
+  updatePracticePhase(
+    sessionId: string,
+    phase: PracticePhase,
+    awaitingConfirmation: number,
+  ): void;
+  savePracticePhaseScore(
+    sessionId: string,
+    phase: 'explanation' | 'pseudo' | 'code',
+    text: string,
+    score: number,
+    feedback: string,
+  ): void;
+  completePracticeSession(
+    sessionId: string,
+    combinedQuality: number,
+  ): void;
+  getPracticeSessionForTopic(
+    userId: string,
+    topicId: string,
+  ): PracticeSession | undefined;
 
   // ── Logging ───────────────────────────────────────────────────────────────
   logMessage(

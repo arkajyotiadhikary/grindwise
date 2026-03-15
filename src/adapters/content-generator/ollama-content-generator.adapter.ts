@@ -8,6 +8,8 @@ import {
   SolutionWalkthrough,
   RevisionSummary,
   DsaAnswerResult,
+  PhaseEvaluationResult,
+  PriorPhaseContext,
 } from '@grindwise/domain/ports/content-generator.port';
 import { Topic } from '@grindwise/domain/entities/topic.entity';
 import { Problem } from '@grindwise/domain/entities/problem.entity';
@@ -346,6 +348,85 @@ Rules:
     }
     const answer = extractSection(raw, 'ANSWER');
     return { isDsaRelated: true, answer: answer || raw };
+  }
+
+  async evaluateExplanation(
+    userExplanation: string,
+    problem: Problem,
+    topic: Topic,
+    priorPhases?: PriorPhaseContext[],
+  ): Promise<PhaseEvaluationResult | null> {
+    return this.evaluatePhase('explanation', userExplanation, problem, topic, priorPhases);
+  }
+
+  async evaluatePseudoCode(
+    userPseudo: string,
+    problem: Problem,
+    topic: Topic,
+    priorPhases?: PriorPhaseContext[],
+  ): Promise<PhaseEvaluationResult | null> {
+    return this.evaluatePhase('pseudocode', userPseudo, problem, topic, priorPhases);
+  }
+
+  async evaluateCode(
+    userCode: string,
+    problem: Problem,
+    topic: Topic,
+    priorPhases?: PriorPhaseContext[],
+  ): Promise<PhaseEvaluationResult | null> {
+    return this.evaluatePhase('code', userCode, problem, topic, priorPhases);
+  }
+
+  private buildPriorContext(priorPhases?: PriorPhaseContext[]): string {
+    if (!priorPhases || priorPhases.length === 0) return '';
+
+    const lines = priorPhases.map(
+      (p) => `- ${p.phase} (scored ${p.score}/5): "${p.summary}"`,
+    );
+    return `\nEarlier in this session you reviewed their work:\n${lines.join('\n')}\nUse this for continuity — acknowledge progress or recurring issues briefly, but focus on the current submission.\n`;
+  }
+
+  private async evaluatePhase(
+    phase: string,
+    submission: string,
+    problem: Problem,
+    topic: Topic,
+    priorPhases?: PriorPhaseContext[],
+  ): Promise<PhaseEvaluationResult | null> {
+    const descSnippet = problem.description?.slice(0, 400) ?? '';
+    const priorContext = this.buildPriorContext(priorPhases);
+
+    const prompt = `You are a friendly DSA tutor talking directly to the learner. Evaluate their ${phase} and give feedback addressed to them using "you/your".
+Problem: ${problem.title} (${problem.difficulty}), Topic: ${topic.name}
+${descSnippet ? `Description: ${descSnippet}` : ''}${priorContext}
+Their submission: """${submission}"""
+
+Respond EXACTLY in this format (no extra text):
+SCORE: [0-5]
+FEEDBACK: [1-3 sentences speaking directly to the learner — use "you/your", be encouraging, point out what they did well and what to improve]
+ACCEPTABLE: [YES/NO]`;
+
+    return this.safeGenerate(
+      prompt,
+      (raw) => this.parsePhaseEvaluation(raw),
+      { temperature: 0.2, maxTokens: 300 },
+      `evaluate_${phase}`,
+    );
+  }
+
+  private parsePhaseEvaluation(raw: string): PhaseEvaluationResult {
+    const scoreMatch = /SCORE:\s*(\d)/i.exec(raw);
+    const score = scoreMatch ? Math.min(5, Math.max(0, parseInt(scoreMatch[1]!, 10))) : 3;
+
+    const feedbackMatch = /FEEDBACK:\s*([\s\S]*?)(?=\nACCEPTABLE:|$)/i.exec(raw);
+    const feedback = feedbackMatch ? feedbackMatch[1]!.trim() : 'Submission received.';
+
+    const acceptableMatch = /ACCEPTABLE:\s*(YES|NO)/i.exec(raw);
+    const isAcceptable = acceptableMatch
+      ? acceptableMatch[1]!.toUpperCase() === 'YES'
+      : score >= 3;
+
+    return { score, feedback, isAcceptable };
   }
 
   private async safeGenerate<T>(

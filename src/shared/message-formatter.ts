@@ -167,6 +167,56 @@ export class MessageFormatter {
     ].join('\n');
   }
 
+  static phaseEvaluationResult(
+    phase: string,
+    score: number,
+    feedback: string,
+  ): string {
+    const stars = '\u2B50'.repeat(score) + '\u2606'.repeat(5 - score);
+    return [
+      `*${phase.toUpperCase()} Evaluation*`,
+      '',
+      `Score: ${stars} (${score}/5)`,
+      '',
+      `${feedback}`,
+      '',
+      '_Are you confident with this? Reply *YES* to continue or *NO* to retry._',
+    ].join('\n');
+  }
+
+  static phasePrompt(phase: string): string {
+    const instructions: Record<string, string> = {
+      pseudo:
+        'Now write your *pseudocode* for solving this problem.\n\nReply */pseudo <your pseudocode>*',
+      code:
+        'Now write your *actual code* solution.\n\nReply */code <your code>*',
+    };
+    return instructions[phase] ?? `Proceed with the *${phase}* phase.`;
+  }
+
+  static practiceComplete(
+    scores: { explanation: number; pseudo: number; code: number },
+    combined: number,
+  ): string {
+    return [
+      '*Practice Session Complete!*',
+      '',
+      `Explanation: ${scores.explanation}/5`,
+      `Pseudocode:  ${scores.pseudo}/5`,
+      `Code:        ${scores.code}/5`,
+      '',
+      `*Combined Quality: ${combined}/5*`,
+      '',
+      combined >= 4
+        ? 'Excellent work! You demonstrated strong understanding.'
+        : 'Good attempt! More practice will strengthen your grasp.',
+    ].join('\n');
+  }
+
+  static retryPhasePrompt(phase: string): string {
+    return `No worries! Take another shot.\n\nReply */${phase} <your revised answer>*`;
+  }
+
   static help(): string {
     return [
       `🤖 *DSA Learning Bot — Commands*`,
@@ -185,6 +235,12 @@ export class MessageFormatter {
       '  /medium — Solved with some difficulty',
       '  /hard — Struggled significantly',
       '  /recall / /fuzzy / /blank — For review sessions',
+      '',
+      '🧠 *Practice Flow (after getting a problem):*',
+      '  /explanation <text> — Explain your approach',
+      '  /pseudo <text> — Write pseudocode',
+      '  /code <text> — Submit your solution',
+      '  YES / NO — Confirm or retry after evaluation',
       '',
       '📝 *Tests:*',
       "  /test — Start today's test (weekend only)",

@@ -157,7 +157,34 @@ export function initializeDatabase(): void {
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
+    -- Practice sessions (multi-phase practice flow)
+    CREATE TABLE IF NOT EXISTS practice_sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      topic_id TEXT NOT NULL,
+      problem_id TEXT NOT NULL,
+      phase TEXT CHECK(phase IN ('explanation','pseudo','code','completed')) DEFAULT 'explanation',
+      awaiting_confirmation INTEGER DEFAULT 0,
+      explanation_text TEXT,
+      explanation_score INTEGER,
+      explanation_feedback TEXT,
+      pseudo_text TEXT,
+      pseudo_score INTEGER,
+      pseudo_feedback TEXT,
+      code_text TEXT,
+      code_score INTEGER,
+      code_feedback TEXT,
+      combined_quality INTEGER,
+      started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      completed_at DATETIME,
+      UNIQUE(user_id, topic_id),
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (topic_id) REFERENCES topics(id),
+      FOREIGN KEY (problem_id) REFERENCES problems(id)
+    );
+
     -- Indexes for performance
+    CREATE INDEX IF NOT EXISTS idx_practice_sessions_user ON practice_sessions(user_id);
     CREATE INDEX IF NOT EXISTS idx_user_progress_user ON user_progress(user_id);
     CREATE INDEX IF NOT EXISTS idx_user_progress_topic ON user_progress(topic_id);
     CREATE INDEX IF NOT EXISTS idx_spaced_rep_next_review ON spaced_repetition(next_review_date);

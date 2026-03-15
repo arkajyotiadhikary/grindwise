@@ -18,6 +18,8 @@ import { SubmitTestAnswerUseCase } from './application/use-cases/submit-test-ans
 import { SendProgressReportUseCase } from './application/use-cases/send-progress-report.usecase';
 import { SendHelpUseCase } from './application/use-cases/send-help.usecase';
 import { AskDsaQuestionUseCase } from './application/use-cases/ask-dsa-question.usecase';
+import { SubmitPracticePhaseUseCase } from './application/use-cases/submit-practice-phase.usecase';
+import { HandlePracticeConfirmationUseCase } from './application/use-cases/handle-practice-confirmation.usecase';
 
 /**
  * DIContainer wires all infrastructure adapters and application use cases.
@@ -113,6 +115,22 @@ export class DIContainer {
 
   getAskDsaQuestionUseCase(): AskDsaQuestionUseCase {
     return new AskDsaQuestionUseCase(this.repo, this.messenger, this.contentGen);
+  }
+
+  getSubmitPracticePhaseUseCase(): SubmitPracticePhaseUseCase {
+    return new SubmitPracticePhaseUseCase(
+      this.repo,
+      this.messenger,
+      this.contentGen,
+    );
+  }
+
+  getHandlePracticeConfirmationUseCase(): HandlePracticeConfirmationUseCase {
+    return new HandlePracticeConfirmationUseCase(
+      this.repo,
+      this.messenger,
+      this.curriculum,
+    );
   }
 
   getRepository(): IRepositoryPort {
