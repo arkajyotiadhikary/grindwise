@@ -18,7 +18,10 @@ const INITIAL_BACKOFF_MS = 3_000;
 const BACKOFF_MULTIPLIER = 2;
 const MAX_BACKOFF_MS = 60_000;
 const MAX_RETRIES = 10;
+const BAD_MAC_THRESHOLD = 5;
+const BAD_MAC_WINDOW_MS = 60_000;
 let hasAttemptedAuthReset = false;
+let badMacTimestamps: number[] = [];
 
 export async function startBot(
   onMessage: OnMessageCallback,
@@ -173,15 +176,64 @@ async function connectWithBackoff(
 
     sock.ev.on('messages.upsert', async (payload: BaileysMessage) => {
       try {
-        for (const m of payload.messages as Array<{ key?: { id?: string }; message?: unknown }>) {
+        for (const m of payload.messages as Array<{
+          key?: { id?: string; fromMe?: boolean };
+          message?: unknown;
+          messageStubType?: number;
+        }>) {
           if (m.key?.id && m.message) {
             msgStore.set(m.key.id, m);
+          }
+
+          // Detect decryption failures (Bad MAC / corrupted session)
+          // Messages that arrive without content and aren't from us indicate
+          // the Signal session failed to decrypt
+          if (!m.key?.fromMe && !m.message && m.messageStubType) {
+            console.warn(
+              `[socket] Possible decryption failure detected (stubType: ${m.messageStubType})`,
+            );
+            if (trackBadMacError() && !hasAttemptedAuthReset) {
+              hasAttemptedAuthReset = true;
+              console.error(
+                `[socket] ${BAD_MAC_THRESHOLD} decryption failures in ${BAD_MAC_WINDOW_MS / 1000}s. Clearing auth state for fresh session...`,
+              );
+              badMacTimestamps = [];
+              await clearAuthState();
+              await connectWithBackoff(
+                onMessage,
+                onReady,
+                0,
+                INITIAL_BACKOFF_MS,
+              );
+              return;
+            }
           }
         }
         await onMessage(sock, payload);
       } catch (error: unknown) {
-        const msg = error instanceof Error ? error.message : String(error);
-        console.error('[socket] onMessage callback failed', { error: msg });
+        const errMsg = error instanceof Error ? error.message : String(error);
+
+        // Catch Bad MAC errors that propagate as exceptions
+        if (errMsg.includes('Bad MAC') || errMsg.includes('Bad mac')) {
+          console.warn('[socket] Bad MAC error caught in message handler');
+          if (trackBadMacError() && !hasAttemptedAuthReset) {
+            hasAttemptedAuthReset = true;
+            console.error(
+              `[socket] ${BAD_MAC_THRESHOLD} Bad MAC errors in ${BAD_MAC_WINDOW_MS / 1000}s. Clearing auth state for fresh session...`,
+            );
+            badMacTimestamps = [];
+            await clearAuthState();
+            await connectWithBackoff(
+              onMessage,
+              onReady,
+              0,
+              INITIAL_BACKOFF_MS,
+            );
+            return;
+          }
+        }
+
+        console.error('[socket] onMessage callback failed', { error: errMsg });
       }
     });
   } catch (error: unknown) {
@@ -204,6 +256,25 @@ async function connectWithBackoff(
     );
     await delay(backoffMs);
     await connectWithBackoff(onMessage, onReady, retryCount + 1, nextBackoff);
+  }
+}
+
+function trackBadMacError(): boolean {
+  const now = Date.now();
+  badMacTimestamps.push(now);
+  badMacTimestamps = badMacTimestamps.filter(
+    (ts) => now - ts <= BAD_MAC_WINDOW_MS,
+  );
+  return badMacTimestamps.length >= BAD_MAC_THRESHOLD;
+}
+
+async function clearAuthState(): Promise<void> {
+  const fs = await import('fs');
+  const path = await import('path');
+  const authDir = path.resolve(config.authStatePath);
+  if (fs.existsSync(authDir)) {
+    fs.rmSync(authDir, { recursive: true, force: true });
+    console.log('[socket] Auth state cleared.');
   }
 }
 
