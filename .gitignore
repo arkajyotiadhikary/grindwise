@@ -36,3 +36,6 @@ Thumbs.db
 
 # WhatsApp Baileys auth state (contains session credentials)
 auth_state/
+
+# Dolt database files (added by bd init)
+.dolt/
