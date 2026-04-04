@@ -287,7 +287,7 @@ describe('Use Cases — Integration with real SQLite', () => {
         correct_answer: string;
       }>;
       expect(questions.length).toBe(3);
-      expect(messenger.sendList).toHaveBeenCalled();
+      expect(messenger.sendPoll).toHaveBeenCalled();
     });
 
     it('completes multi-question test end-to-end', async () => {
@@ -310,7 +310,9 @@ describe('Use Cases — Integration with real SQLite', () => {
       for (const q of questions) {
         await submitAnswer.execute(
           user,
-          `test:${pending.id}:q:${q.id}:a:${q.correct_answer}`,
+          pending.id,
+          q.id,
+          q.correct_answer,
         );
       }
 
@@ -342,12 +344,16 @@ describe('Use Cases — Integration with real SQLite', () => {
       // First question correct, rest wrong
       await submitAnswer.execute(
         user,
-        `test:${testId}:q:${questions[0]!.id}:a:${questions[0]!.correct_answer}`,
+        testId,
+        questions[0]!.id,
+        questions[0]!.correct_answer,
       );
       for (let i = 1; i < questions.length; i++) {
         await submitAnswer.execute(
           user,
-          `test:${testId}:q:${questions[i]!.id}:a:WRONG`,
+          testId,
+          questions[i]!.id,
+          'WRONG',
         );
       }
 

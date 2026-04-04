@@ -17,7 +17,7 @@ describe('SendWeeklyTestUseCase', () => {
     );
   });
 
-  it('creates test and sends first MCQ question as list', async () => {
+  it('creates test and sends first MCQ question as poll', async () => {
     const questions = [{
       id: 'q-1', topic_id: 'topic-1',
       question: 'What is O(1)?', type: 'mcq',
@@ -30,13 +30,12 @@ describe('SendWeeklyTestUseCase', () => {
     await useCase.execute(createMockUser());
 
     expect(repo.createWeeklyTest).toHaveBeenCalledWith('user-1', 1, questions);
-    expect(messenger.sendList).toHaveBeenCalledWith(
+    expect(messenger.sendPoll).toHaveBeenCalledWith(
       expect.any(String),
       expect.stringContaining('Q1/1'),
-      'Select Answer',
-      expect.arrayContaining([
-        expect.objectContaining({ id: expect.stringContaining('test:test-1:q:q-1:a:Constant') }),
-      ]),
+      ['Constant', 'Linear', 'Quadratic'],
+      1,
+      { testId: 'test-1', questionId: 'q-1' },
     );
   });
 
@@ -52,7 +51,7 @@ describe('SendWeeklyTestUseCase', () => {
 
     await useCase.execute(createMockUser());
 
-    // Should use sendText for non-MCQ (via MessageFormatter.testQuestion)
+    expect(messenger.sendPoll).not.toHaveBeenCalled();
     const calls = messenger.sendText.mock.calls;
     const lastMsg = calls[calls.length - 1]![1];
     expect(lastMsg).toContain('Explain time complexity');

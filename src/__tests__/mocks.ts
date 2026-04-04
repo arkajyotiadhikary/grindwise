@@ -81,6 +81,8 @@ export function createMockMessenger(): jest.Mocked<IMessenger> {
     sendText: jest.fn().mockResolvedValue(successResult),
     sendButtons: jest.fn().mockResolvedValue(successResult),
     sendList: jest.fn().mockResolvedValue(successResult),
+    sendPoll: jest.fn().mockResolvedValue(successResult),
+    getPollContext: jest.fn().mockReturnValue(undefined),
     markRead: jest.fn().mockResolvedValue(undefined),
     showTyping: jest.fn().mockResolvedValue(undefined),
     stopTyping: jest.fn().mockResolvedValue(undefined),
