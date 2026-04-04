@@ -9,7 +9,9 @@
     "debug": "ts-node -r tsconfig-paths/register src/debug.ts",
     "dev": "tsx --watch -r tsconfig-paths/register src/main.ts",
     "db:init": "ts-node -r tsconfig-paths/register src/db/init.ts",
-    "scheduler": "ts-node -r tsconfig-paths/register src/services/scheduler.ts"
+    "scheduler": "ts-node -r tsconfig-paths/register src/services/scheduler.ts",
+    "test": "jest --verbose",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.17.16",
@@ -25,10 +27,13 @@
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.8",
     "@types/express": "^4.17.21",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.11.5",
     "@types/node-cron": "^3.0.11",
     "@types/uuid": "^9.0.7",
+    "jest": "^30.3.0",
     "prettier": "3.8.1",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.21.0",
