@@ -167,6 +167,16 @@ export class MessageFormatter {
     ].join('\n');
   }
 
+  static phaseSubmissionConfirm(phase: string): string {
+    return [
+      `*${phase.toUpperCase()} Submitted*`,
+      '',
+      'Your answer has been saved.',
+      '',
+      '_Does this look good? Reply *YES* to evaluate or *NO* to retry._',
+    ].join('\n');
+  }
+
   static phaseEvaluationResult(
     phase: string,
     score: number,
@@ -180,7 +190,7 @@ export class MessageFormatter {
       '',
       `${feedback}`,
       '',
-      '_Are you confident with this? Reply *YES* to continue or *NO* to retry._',
+      '_Evaluation complete. Moving forward..._',
     ].join('\n');
   }
 

@@ -121,7 +121,6 @@ export class DIContainer {
     return new SubmitPracticePhaseUseCase(
       this.repo,
       this.messenger,
-      this.contentGen,
     );
   }
 
@@ -129,6 +128,7 @@ export class DIContainer {
     return new HandlePracticeConfirmationUseCase(
       this.repo,
       this.messenger,
+      this.contentGen,
       this.curriculum,
     );
   }
