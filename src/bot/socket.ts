@@ -13,6 +13,11 @@ export type OnMessageCallback = (
   payload: BaileysMessage,
 ) => Promise<void>;
 export type OnReadyCallback = (sock: WASocket) => void;
+export type OnPollVoteCallback = (
+  pollMessageId: string,
+  voterJid: string,
+  selectedOptions: string[],
+) => Promise<void>;
 
 const INITIAL_BACKOFF_MS = 3_000;
 const BACKOFF_MULTIPLIER = 2;
@@ -26,13 +31,15 @@ let badMacTimestamps: number[] = [];
 export async function startBot(
   onMessage: OnMessageCallback,
   onReady: OnReadyCallback,
+  onPollVote?: OnPollVoteCallback,
 ): Promise<void> {
-  await connectWithBackoff(onMessage, onReady, 0, INITIAL_BACKOFF_MS);
+  await connectWithBackoff(onMessage, onReady, onPollVote, 0, INITIAL_BACKOFF_MS);
 }
 
 async function connectWithBackoff(
   onMessage: OnMessageCallback,
   onReady: OnReadyCallback,
+  onPollVote: OnPollVoteCallback | undefined,
   retryCount: number,
   backoffMs: number,
 ): Promise<void> {
@@ -71,7 +78,7 @@ async function connectWithBackoff(
       logger: silentLogger,
       getMessage: async (key: { remoteJid?: string; id?: string }) => {
         const msg = msgStore.get(key.id ?? '');
-        return (msg as Record<string, unknown> | undefined)?.message ?? { conversation: '' };
+        return (msg as Record<string, unknown> | undefined)?.message;
       },
       patchMessageBeforeSending: async (
         msg: unknown,
@@ -134,6 +141,7 @@ async function connectWithBackoff(
               await connectWithBackoff(
                 onMessage,
                 onReady,
+                onPollVote,
                 0,
                 INITIAL_BACKOFF_MS,
               );
@@ -167,6 +175,7 @@ async function connectWithBackoff(
           await connectWithBackoff(
             onMessage,
             onReady,
+            onPollVote,
             retryCount + 1,
             nextBackoff,
           );
@@ -202,6 +211,7 @@ async function connectWithBackoff(
               await connectWithBackoff(
                 onMessage,
                 onReady,
+                onPollVote,
                 0,
                 INITIAL_BACKOFF_MS,
               );
@@ -226,6 +236,7 @@ async function connectWithBackoff(
             await connectWithBackoff(
               onMessage,
               onReady,
+              onPollVote,
               0,
               INITIAL_BACKOFF_MS,
             );
@@ -236,6 +247,63 @@ async function connectWithBackoff(
         console.error('[socket] onMessage callback failed', { error: errMsg });
       }
     });
+
+    if (onPollVote) {
+      sock.ev.on(
+        'messages.update',
+        async (
+          updates: Array<{
+            key: { id?: string; remoteJid?: string };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            update: any;
+          }>,
+        ) => {
+          try {
+            for (const { key, update } of updates) {
+              if (!update.pollUpdates || update.pollUpdates.length === 0) {
+                continue;
+              }
+
+              const pollMsgId = key.id ?? '';
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const stored = msgStore.get(pollMsgId) as any;
+              if (!stored?.message) continue;
+
+              const { getAggregateVotesInPollMessage, updateMessageWithPollUpdate } =
+                baileys;
+
+              for (const pollUpdate of update.pollUpdates) {
+                updateMessageWithPollUpdate(stored, pollUpdate);
+              }
+
+              const votes = getAggregateVotesInPollMessage({
+                message: stored.message,
+                pollUpdates: stored.pollUpdates ?? update.pollUpdates,
+              }) as Array<{ name: string; voters: string[] }>;
+
+              const selected = votes.filter(
+                (v: { voters: string[] }) => v.voters.length > 0,
+              );
+              if (selected.length === 0) continue;
+
+              const voterJid =
+                selected[0]?.voters[0] ?? key.remoteJid ?? '';
+              const selectedOptions = selected.map(
+                (v: { name: string }) => v.name,
+              );
+
+              await onPollVote(pollMsgId, voterJid, selectedOptions);
+            }
+          } catch (error: unknown) {
+            const errMsg =
+              error instanceof Error ? error.message : String(error);
+            console.error('[socket] messages.update poll handler failed', {
+              error: errMsg,
+            });
+          }
+        },
+      );
+    }
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error('[socket] connectWithBackoff error', {
@@ -255,7 +323,7 @@ async function connectWithBackoff(
       MAX_BACKOFF_MS,
     );
     await delay(backoffMs);
-    await connectWithBackoff(onMessage, onReady, retryCount + 1, nextBackoff);
+    await connectWithBackoff(onMessage, onReady, onPollVote, retryCount + 1, nextBackoff);
   }
 }
 

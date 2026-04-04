@@ -33,22 +33,30 @@ function buildNumberedMenu(
 }
 
 const TYPING_REFRESH_MS = 4000;
+const MAX_POLL_CONTEXTS = 100;
 
 export class BaileysMessenger implements IMessenger {
   private readonly sock: WASocket;
   private lastSent = 0;
+  private sendingCount = 0;
   private readonly sentMessageIds = new Set<string>();
   private readonly typingTimers = new Map<string, ReturnType<typeof setInterval>>();
+  private readonly pollContextStore = new Map<string, Record<string, string>>();
 
   constructor(sock: WASocket) {
     this.sock = sock;
   }
 
   isBotMessage(messageId: string): boolean {
-    return this.sentMessageIds.has(messageId);
+    // sendingCount > 0 means a send is in flight. Baileys defers the
+    // messages.upsert handler as a microtask that runs AFTER sendMessage
+    // resolves but BEFORE the setTimeout(0) macrotask that decrements
+    // the counter. This reliably catches bot-sent messages in self-chat.
+    return this.sendingCount > 0 || this.sentMessageIds.has(messageId);
   }
 
   async sendText(to: string, text: string): Promise<SendResult> {
+    this.sendingCount++;
     try {
       await this.rateLimit();
       const jid = this.resolveJid(to);
@@ -64,6 +72,10 @@ export class BaileysMessenger implements IMessenger {
       const msg = error instanceof Error ? error.message : String(error);
       console.error('[BaileysMessenger] sendText failed', { error: msg, to });
       return { success: false, error: msg };
+    } finally {
+      // Decrement in a macrotask so the counter stays positive through
+      // the microtask queue where messages.upsert handlers run.
+      setTimeout(() => { this.sendingCount--; }, 0);
     }
   }
 
@@ -86,6 +98,34 @@ export class BaileysMessenger implements IMessenger {
   ): Promise<SendResult> {
     const numbered = buildNumberedMenu(body, options);
     return this.sendText(to, numbered);
+  }
+
+  async sendPoll(
+    to: string,
+    question: string,
+    options: string[],
+    _selectableCount: number,
+    context?: Record<string, string>,
+  ): Promise<SendResult> {
+    // WhatsApp does not render native polls in self-chat ("Message Yourself").
+    // Send as numbered text instead; the handler resolves number replies to
+    // the matching option.
+    const numbered = options.map((o, i) => `${i + 1}. ${o}`).join('\n');
+    const text = `${question}\n\n${numbered}\n\n_Reply with the option number._`;
+    const result = await this.sendText(to, text);
+
+    if (result.messageId && context) {
+      if (this.pollContextStore.size >= MAX_POLL_CONTEXTS) {
+        const oldest = this.pollContextStore.keys().next().value as string;
+        this.pollContextStore.delete(oldest);
+      }
+      this.pollContextStore.set(result.messageId, context);
+    }
+    return result;
+  }
+
+  getPollContext(messageId: string): Record<string, string> | undefined {
+    return this.pollContextStore.get(messageId);
   }
 
   async markRead(_messageId: string): Promise<void> {}

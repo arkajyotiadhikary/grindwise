@@ -15,6 +15,12 @@ export interface ListOption {
   description?: string;
 }
 
+export interface PollVoteResult {
+  pollMessageId: string;
+  voterJid: string;
+  selectedOptions: string[];
+}
+
 export interface IMessenger {
   sendText(to: string, text: string): Promise<SendResult>;
   sendButtons(
@@ -29,6 +35,14 @@ export interface IMessenger {
     buttonText: string,
     options: ListOption[],
   ): Promise<SendResult>;
+  sendPoll(
+    to: string,
+    question: string,
+    options: string[],
+    selectableCount: number,
+    context?: Record<string, string>,
+  ): Promise<SendResult>;
+  getPollContext(messageId: string): Record<string, string> | undefined;
   markRead(messageId: string): Promise<void>;
   showTyping(to: string): Promise<void>;
   stopTyping(to: string): Promise<void>;
