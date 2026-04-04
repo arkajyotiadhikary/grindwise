@@ -29,7 +29,6 @@ roadmap order and user progress state.
 - Language: TypeScript (Node.js)
 - Database: SQLite (primary memory store)
 - AI Engine: Ollama (local LLM for theory + explanations)
-- Automation/Agent Layer: OpenClaw (optional orchestration)
 - Scheduler: node-cron (or equivalent)
 - Problem Source: LeetCode API / MCP Server (leetcode-mcp-server)
 - Messaging Channels:
@@ -159,14 +158,6 @@ database-schema.sql
 - No random cron jobs.
 - All schedules must reference user progress state.
 - Revision jobs have higher priority than new topics.
-
----
-
-## OpenClaw Integration Notes
-
-- Use OpenClaw for automation orchestration ONLY.
-- Core learning logic must remain inside the TypeScript backend.
-- OpenClaw should call internal APIs instead of containing business logic.
 
 ---
 

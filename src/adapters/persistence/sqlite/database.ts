@@ -140,7 +140,6 @@ export function initializeDatabase(): void {
       message_type TEXT NOT NULL,
       content TEXT,
       status TEXT CHECK(status IN ('pending','sent','delivered','read','failed')) DEFAULT 'pending',
-      openclaw_message_id TEXT,
       sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id)
     );

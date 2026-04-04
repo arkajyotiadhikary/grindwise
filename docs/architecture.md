@@ -47,12 +47,11 @@ All dependencies point inward: delivery and infrastructure depend on the domain
 │  Adapters (implement ports):                                     │
 │    SqliteRepositoryAdapter      → IRepositoryPort                │
 │    BaileysMessenger             → IMessenger                     │
-│    OpenClawMessenger            → IMessenger                     │
 │    OllamaContentGeneratorAdapter → IContentGeneratorPort         │
 │    LeetCodeProblemProviderAdapter → IProblemProviderPort          │
 │                                                                  │
 │  Infrastructure clients (low-level I/O, used by adapters):       │
-│    OllamaClient, OpenClawClient, SQLite Database                 │
+│    OllamaClient, SQLite Database                                 │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -83,11 +82,9 @@ src/
 │
 ├── channels/                        ← messenger adapters (IMessenger impls)
 │   ├── baileys-messenger.ts
-│   └── openclaw-messenger.ts
 │
 ├── infrastructure/                  ← low-level clients (no domain knowledge)
-│   ├── ollama-client.ts
-│   └── openclaw-client.ts
+│   └── ollama-client.ts
 │
 ├── bot/                             ← WhatsApp delivery (driving side)
 │   ├── socket.ts                    Baileys socket lifecycle
@@ -134,7 +131,7 @@ getter per use case. No business logic lives in the container.
 | Port                    | Purpose                                            | Adapter(s)                              |
 | ----------------------- | -------------------------------------------------- | --------------------------------------- |
 | `IRepositoryPort`       | Persistence (users, topics, progress, problems)    | `SqliteRepositoryAdapter`               |
-| `IMessenger`            | Outbound messaging (text, buttons, lists)          | `BaileysMessenger`, `OpenClawMessenger` |
+| `IMessenger`            | Outbound messaging (text, buttons, lists)          | `BaileysMessenger`                      |
 | `IContentGeneratorPort` | AI-generated theory, solutions, revision summaries | `OllamaContentGeneratorAdapter`         |
 | `IProblemProviderPort`  | Fetch & sync LeetCode problems                     | `LeetCodeProblemProviderAdapter`        |
 

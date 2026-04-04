@@ -69,6 +69,7 @@ export interface IRepositoryPort {
     questions: TestQuestion[],
   ): string;
   getPendingTest(userId: string): WeeklyTest | undefined;
+  saveTestAnswers(testId: string, answers: Record<string, string>): void;
   submitTestAnswer(
     testId: string,
     userId: string,
@@ -86,6 +87,11 @@ export interface IRepositoryPort {
     sessionId: string,
     phase: PracticePhase,
     awaitingConfirmation: number,
+  ): void;
+  savePracticePhaseSubmission(
+    sessionId: string,
+    phase: 'explanation' | 'pseudo' | 'code',
+    text: string,
   ): void;
   savePracticePhaseScore(
     sessionId: string,
@@ -111,7 +117,7 @@ export interface IRepositoryPort {
     content: string,
     status?: string,
   ): string;
-  updateMessageStatus(logId: string, status: string, openclawId?: string): void;
+  updateMessageStatus(logId: string, status: string): void;
 
   close(): void;
 }

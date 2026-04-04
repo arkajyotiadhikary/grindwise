@@ -41,7 +41,7 @@ Scheduled:
 | **Application**    | `application/use-cases/`                                                                                 | One use case class per user action — orchestrates domain logic via ports |
 | **Adapters**       | `adapters/persistence/sqlite/`, `adapters/content-generator/`, `adapters/problem-provider/`, `channels/` | Implement domain ports (driven side)                                     |
 | **Delivery**       | `bot/socket.ts`, `bot/handlers.ts`, `services/scheduler.ts`, `index.ts`                                  | Driving side — WhatsApp transport, HTTP admin API, cron scheduler        |
-| **Infrastructure** | `infrastructure/`                                                                                        | Low-level I/O clients (Ollama, OpenClaw) — no domain knowledge           |
+| **Infrastructure** | `infrastructure/`                                                                                        | Low-level I/O clients (Ollama) — no domain knowledge                     |
 | **Composition**    | `main.ts`, `di-container.ts`                                                                             | Entry point and dependency wiring                                        |
 
 ---
@@ -74,12 +74,10 @@ src/
 │   └── problem-provider/            # LeetCodeProblemProviderAdapter
 │
 ├── channels/                        # Messenger adapters (IMessenger impls)
-│   ├── baileys-messenger.ts         # IMessenger via Baileys (primary)
-│   └── openclaw-messenger.ts        # IMessenger via OpenClaw HTTP API (fallback)
+│   └── baileys-messenger.ts         # IMessenger via Baileys (primary)
 │
 ├── infrastructure/                  # Low-level I/O clients
-│   ├── ollama-client.ts             # Local LLM client
-│   └── openclaw-client.ts           # OpenClaw WhatsApp API client
+│   └── ollama-client.ts             # Local LLM client
 │
 ├── bot/                             # WhatsApp delivery (driving side)
 │   ├── socket.ts                    # Baileys socket lifecycle, QR, reconnect
@@ -104,7 +102,7 @@ src/
 | Port                    | Purpose                                            | Adapter(s)                              |
 | ----------------------- | -------------------------------------------------- | --------------------------------------- |
 | `IRepositoryPort`       | Persistence (users, topics, progress, problems)    | `SqliteRepositoryAdapter`               |
-| `IMessenger`            | Outbound messaging (text, buttons, lists)          | `BaileysMessenger`, `OpenClawMessenger` |
+| `IMessenger`            | Outbound messaging (text, buttons, lists)          | `BaileysMessenger`                      |
 | `IContentGeneratorPort` | AI-generated theory, solutions, revision summaries | `OllamaContentGeneratorAdapter`         |
 | `IProblemProviderPort`  | Fetch & sync LeetCode problems by topic            | `LeetCodeProblemProviderAdapter`        |
 
@@ -162,12 +160,6 @@ Direct WebSocket connection to WhatsApp. No API keys required.
   limitation on regular accounts)
 - Session persisted via `useMultiFileAuthState` in `auth_state/`
 - Exponential backoff reconnect: 3s -> 6s -> ... -> 60s max, 10 retries
-
-### OpenClaw (fallback — `src/channels/openclaw-messenger.ts`)
-
-HTTP API wrapper, used when the bot runs in webhook mode (e.g., for cloud
-deployments without persistent sockets). Requires `OPENCLAW_API_KEY` and
-`OPENCLAW_PHONE_NUMBER_ID`.
 
 ---
 

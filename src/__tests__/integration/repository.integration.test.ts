@@ -419,11 +419,10 @@ describe('SqliteRepositoryAdapter — Integration', () => {
     it('updates message status', () => {
       const user = repo.createUser('919999999999');
       const logId = repo.logMessage(user.id, 'outbound', 'topic', 'Hello');
-      repo.updateMessageStatus(logId, 'delivered', 'oc-123');
+      repo.updateMessageStatus(logId, 'delivered');
 
       const row = db.prepare('SELECT * FROM message_logs WHERE id = ?').get(logId) as Record<string, unknown>;
       expect(row['status']).toBe('delivered');
-      expect(row['openclaw_message_id']).toBe('oc-123');
     });
   });
 });

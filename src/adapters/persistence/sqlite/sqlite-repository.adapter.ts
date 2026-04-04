@@ -341,6 +341,12 @@ export class SqliteRepositoryAdapter implements IRepositoryPort {
       .get(userId) as WeeklyTest | undefined;
   }
 
+  saveTestAnswers(testId: string, answers: Record<string, string>): void {
+    this.db
+      .prepare('UPDATE weekly_tests SET answers = ? WHERE id = ?')
+      .run(JSON.stringify(answers), testId);
+  }
+
   submitTestAnswer(
     testId: string,
     userId: string,
@@ -420,6 +426,20 @@ export class SqliteRepositoryAdapter implements IRepositoryPort {
       .run(phase, awaitingConfirmation, sessionId);
   }
 
+  savePracticePhaseSubmission(
+    sessionId: string,
+    phase: 'explanation' | 'pseudo' | 'code',
+    text: string,
+  ): void {
+    this.db
+      .prepare(
+        `UPDATE practice_sessions
+         SET ${phase}_text = ?, awaiting_confirmation = 1
+         WHERE id = ?`,
+      )
+      .run(text, sessionId);
+  }
+
   savePracticePhaseScore(
     sessionId: string,
     phase: 'explanation' | 'pseudo' | 'code',
@@ -475,17 +495,9 @@ export class SqliteRepositoryAdapter implements IRepositoryPort {
     return id;
   }
 
-  updateMessageStatus(
-    logId: string,
-    status: string,
-    openclawId?: string,
-  ): void {
+  updateMessageStatus(logId: string, status: string): void {
     this.db
-      .prepare(
-        `
-      UPDATE message_logs SET status = ?, openclaw_message_id = ? WHERE id = ?
-    `,
-      )
-      .run(status, openclawId ?? null, logId);
+      .prepare(`UPDATE message_logs SET status = ? WHERE id = ?`)
+      .run(status, logId);
   }
 }
