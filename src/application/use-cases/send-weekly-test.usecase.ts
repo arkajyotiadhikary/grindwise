@@ -31,25 +31,26 @@ export class SendWeeklyTestUseCase {
         user.phone_number,
         `📝 *Week ${user.current_week} Assessment*\n\n` +
           `You'll answer ${questions.length} questions covering this week's topics.\n\n` +
-          'Reply with A, B, C, or D for MCQs, True/False for T/F questions, ' +
-          'or your answer for fill-in-the-blank.\n\n' +
+          'For MCQ questions, reply with the *option number*.\n' +
+          'For text questions, type your answer directly.\n\n' +
           "_Type SKIP to skip a question._\n\nReady? Here's Question 1:",
       );
 
       const q = questions[0];
       if (!q) return;
 
-      const options = JSON.parse(q.options ?? '[]') as string[];
+      if (q.type === 'mcq' || q.type === 'true_false') {
+        const options =
+          q.type === 'true_false'
+            ? ['True', 'False']
+            : (JSON.parse(q.options ?? '[]') as string[]);
 
-      if (q.type === 'mcq' && options.length > 0) {
-        await this.messenger.sendList(
+        await this.messenger.sendPoll(
           user.phone_number,
           `Q1/${questions.length}: ${q.question}`,
-          'Select Answer',
-          options.map((opt, i) => ({
-            id: `test:${testId}:q:${q.id}:a:${opt}`,
-            title: `${String.fromCharCode(65 + i)}) ${opt}`,
-          })),
+          options,
+          1,
+          { testId, questionId: q.id },
         );
       } else {
         await this.messenger.sendText(

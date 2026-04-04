@@ -164,7 +164,71 @@ async function handleIncomingMessage(
         }
       }
 
-      await routeUserCommand(user, msg, normalized, di);
+      // If user has an active test, intercept plain text as a test answer
+      // before command routing. MCQ/true_false answers are parsed from
+      // numbered replies since native WhatsApp polls don't work in self-chat.
+      if (normalized.length > 0 && !normalized.startsWith('HELP') && !normalized.startsWith('TEST')) {
+        const pendingTest = di.getRepository().getPendingTest(user.id);
+        if (pendingTest) {
+          const questions = JSON.parse(pendingTest.questions) as Array<{
+            id: string;
+            type: string;
+            options?: string;
+          }>;
+          const answers = JSON.parse(pendingTest.answers ?? '{}') as Record<string, string>;
+          const currentQuestion = questions.find((q) => !answers[q.id]);
+
+          if (currentQuestion) {
+            if (normalized === 'SKIP') {
+              await di
+                .getSubmitTestAnswerUseCase()
+                .execute(user, pendingTest.id, currentQuestion.id, 'SKIP');
+              return;
+            }
+
+            if (
+              currentQuestion.type === 'mcq' ||
+              currentQuestion.type === 'true_false'
+            ) {
+              const opts =
+                currentQuestion.type === 'true_false'
+                  ? ['True', 'False']
+                  : (JSON.parse(currentQuestion.options ?? '[]') as string[]);
+
+              const numChoice = parseInt(trimmedText, 10);
+              let answer: string | undefined;
+              if (!isNaN(numChoice) && numChoice >= 1 && numChoice <= opts.length) {
+                answer = opts[numChoice - 1];
+              } else {
+                answer = opts.find(
+                  (o) => o.toLowerCase() === trimmedText.toLowerCase(),
+                );
+              }
+
+              if (answer) {
+                await di
+                  .getSubmitTestAnswerUseCase()
+                  .execute(user, pendingTest.id, currentQuestion.id, answer);
+                return;
+              }
+
+              await messenger.sendText(
+                phone,
+                `Please reply with a number (1–${opts.length}) or the option text.`,
+              );
+              return;
+            }
+
+            // Text / fill-in-blank question
+            await di
+              .getSubmitTestAnswerUseCase()
+              .execute(user, pendingTest.id, currentQuestion.id, trimmedText);
+            return;
+          }
+        }
+      }
+
+      await routeUserCommand(user, normalized, di);
     } finally {
       await messenger.stopTyping(phone);
     }
@@ -179,23 +243,9 @@ async function handleIncomingMessage(
 
 async function routeUserCommand(
   user: User,
-  msg: RawMessage,
   command: string,
   di: DIContainer,
 ): Promise<void> {
-  if (msg.type === 'interactive') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const interactiveId: string =
-      (msg as any)['interactive']?.button_reply?.id ??
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (msg as any)['interactive']?.list_reply?.id ??
-      '';
-    if (interactiveId.startsWith('test:')) {
-      await di.getSubmitTestAnswerUseCase().execute(user, interactiveId);
-      return;
-    }
-  }
-
   switch (command) {
     case 'TOPIC':
       await di.getSendDailyTopicUseCase().execute(user);
@@ -271,6 +321,39 @@ async function routeUserCommand(
           );
       }
   }
+}
+
+export function createPollVoteHandler(
+  di: DIContainer,
+): (pollMessageId: string, voterJid: string, selectedOptions: string[]) => Promise<void> {
+  return async (
+    pollMessageId: string,
+    _voterJid: string,
+    selectedOptions: string[],
+  ): Promise<void> => {
+    try {
+      const context = di.getMessenger().getPollContext(pollMessageId);
+      if (!context) return;
+
+      const testId = context['testId'];
+      const questionId = context['questionId'];
+      if (!testId || !questionId) return;
+
+      const users = di.getRepository().getAllActiveUsers();
+      const user = users[0];
+      if (!user) return;
+
+      const answer = selectedOptions[0];
+      if (!answer) return;
+
+      await di
+        .getSubmitTestAnswerUseCase()
+        .execute(user, testId, questionId, answer);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      console.error('[handlers] poll vote handler error', { error: errMsg });
+    }
+  };
 }
 
 function extractMessageText(msg: RawMessage): string | undefined {

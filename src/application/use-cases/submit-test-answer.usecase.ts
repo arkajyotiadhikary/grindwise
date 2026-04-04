@@ -10,19 +10,13 @@ export class SubmitTestAnswerUseCase {
     private readonly messenger: IMessenger,
   ) {}
 
-  /**
-   * Handles an interactive test answer submission.
-   * interactiveId format: test:{testId}:q:{questionId}:a:{answer}
-   */
-  async execute(user: User, interactiveId: string): Promise<void> {
+  async execute(
+    user: User,
+    testId: string,
+    questionId: string,
+    answer: string,
+  ): Promise<void> {
     try {
-      const parts = interactiveId.split(':');
-      if (parts.length < 6) return;
-
-      const testId = parts[1] ?? '';
-      const questionId = parts[3] ?? '';
-      const answer = parts.slice(5).join(':');
-
       const test = this.repo.getPendingTest(user.id);
       if (!test || test.id !== testId) return;
 
@@ -36,23 +30,28 @@ export class SubmitTestAnswerUseCase {
       const nextQuestion = questions.find((q) => !answeredSoFar[q.id]);
 
       if (nextQuestion) {
+        this.repo.saveTestAnswers(testId, answeredSoFar);
         const questionNum = Object.keys(answeredSoFar).length + 1;
-        const options = JSON.parse(nextQuestion.options ?? '[]') as string[];
 
-        if (nextQuestion.type === 'mcq' && options.length > 0) {
-          await this.messenger.sendList(
-            user.phone_number,
-            `Q${questionNum}/${questions.length}: ${nextQuestion.question}`,
-            'Select Answer',
-            options.map((opt, i) => ({
-              id: `test:${testId}:q:${nextQuestion.id}:a:${opt}`,
-              title: `${String.fromCharCode(65 + i)}) ${opt}`,
-            })),
+        if (
+          nextQuestion.type === 'mcq' ||
+          nextQuestion.type === 'true_false'
+        ) {
+          await this.sendNextQuestionAsPoll(
+            user,
+            testId,
+            nextQuestion,
+            questionNum,
+            questions.length,
           );
         } else {
           await this.messenger.sendText(
             user.phone_number,
-            `Q${questionNum}/${questions.length}: ${nextQuestion.question}`,
+            MessageFormatter.testQuestion(
+              nextQuestion,
+              questionNum,
+              questions.length,
+            ),
           );
         }
       } else {
@@ -90,5 +89,26 @@ export class SubmitTestAnswerUseCase {
       });
       throw err;
     }
+  }
+
+  private async sendNextQuestionAsPoll(
+    user: User,
+    testId: string,
+    question: TestQuestion,
+    questionNum: number,
+    totalQuestions: number,
+  ): Promise<void> {
+    const options =
+      question.type === 'true_false'
+        ? ['True', 'False']
+        : (JSON.parse(question.options ?? '[]') as string[]);
+
+    await this.messenger.sendPoll(
+      user.phone_number,
+      `Q${questionNum}/${totalQuestions}: ${question.question}`,
+      options,
+      1,
+      { testId, questionId: question.id },
+    );
   }
 }

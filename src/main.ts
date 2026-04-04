@@ -4,7 +4,7 @@ import {
 } from './adapters/persistence/sqlite/database';
 import { seedRoadmap } from './adapters/persistence/sqlite/seeder';
 import { startBot } from './bot/socket';
-import { createMessageHandler } from './bot/handlers';
+import { createMessageHandler, createPollVoteHandler } from './bot/handlers';
 import { BaileysMessenger } from './channels/baileys-messenger';
 import { DIContainer } from './di-container';
 import { startScheduler } from './services/scheduler';
@@ -41,6 +41,10 @@ async function main(): Promise<void> {
       di = new DIContainer(db, messenger);
       startScheduler(di);
       startExpressServer(di);
+    },
+    async (pollMessageId, voterJid, selectedOptions) => {
+      if (!di) return;
+      await createPollVoteHandler(di)(pollMessageId, voterJid, selectedOptions);
     },
   );
 }
